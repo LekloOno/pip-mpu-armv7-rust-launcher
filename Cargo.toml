@@ -1,0 +1,6 @@
+[package]
+name = "pip-mpu-armv7-rust-launcher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
