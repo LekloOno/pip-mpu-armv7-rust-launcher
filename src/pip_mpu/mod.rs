@@ -36,8 +36,8 @@ pub fn pip_cut_memory_block(
 
 #[inline]
 pub fn pip_merge_memory_blocks(
-    block_to_merge_1_local_id: *const u32,
-    block_to_merge_2_local_id: *const u32,
+    block_to_merge_1_local_id: &*const u32,
+    block_to_merge_2_local_id: &*const u32,
     mpu_region_nb: i32,
 ) -> *const u32 {
     let r0: *const u32;
@@ -55,9 +55,9 @@ pub fn pip_merge_memory_blocks(
 
 #[inline]
 pub fn pip_prepare(
-    part_desc_block_id: *const u32,
+    part_desc_block_id: &*const u32,
     projected_slots_nb: i32,
-    requisitionned_block_local_id: *const u32,
+    requisitionned_block_local_id: &*const u32,
 ) -> u32 {
     let r0: u32;
     unsafe {
@@ -74,8 +74,8 @@ pub fn pip_prepare(
 
 #[inline]
 pub fn pip_add_memory_block(
-    child_part_desc_block_local_id: *const u32,
-    block_to_share_local_id: *const u32,
+    child_part_desc_block_local_id: &*const u32,
+    block_to_share_local_id: &*const u32,
     r: u32,
     w: u32,
     e: u32,
