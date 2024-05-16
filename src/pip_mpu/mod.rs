@@ -1,4 +1,5 @@
 mod pip_items;
+use crate::pip_mpu::pip_items::pip_items::BlockOrError;
 use core::arch::asm;
 
 #[inline]
@@ -163,4 +164,23 @@ pub fn pip_read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> *con
     }
 
     id_block
+}
+
+#[inline]
+pub fn pip_find_block(
+    part_desc_block_id: *const u32,
+    addr_in_block: *const u32,
+    block_addr: *const BlockOrError,
+) -> u32 {
+    let could_find_block: u32;
+    unsafe {
+        asm!(
+            "svc #10",
+            inout("r0") part_desc_block_id => could_find_block,
+            in("r1") addr_in_block,
+            in("r2") block_addr,
+        );
+    }
+
+    could_find_block
 }

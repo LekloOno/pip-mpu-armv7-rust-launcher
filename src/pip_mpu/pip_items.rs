@@ -4,6 +4,7 @@ pub mod pip_items {
     const BASIC_FRAME_SIZE: usize = 17;
     const EXTENDED_FRAME_SIZE: usize = 50;
 
+    #[repr(C)]
     pub struct BlockAttr {
         entry_addr: *const u32,
         start_addr: *const u32,
@@ -12,6 +13,12 @@ pub mod pip_items {
         write: u32,
         exec: u32,
         accessible: u32,
+    }
+
+    #[repr(C)]
+    pub struct BlockOrError {
+        error: i32,
+        block_attr: BlockAttr,
     }
     /*
         #[repr(C)]
