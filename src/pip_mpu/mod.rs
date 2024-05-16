@@ -33,3 +33,22 @@ pub fn pip_cut_memory_block(
 
     r0
 }
+
+#[inline]
+pub fn pip_merge_memory_blocks(
+    block_to_merge_1_local_id: *const u32,
+    block_to_merge_2_local_id: *const u32,
+    mpu_region_nb: i32,
+) -> *const u32 {
+    let r0: *const u32;
+    unsafe {
+        asm!(
+            "svc #2",
+            inout("r0") block_to_merge_1_local_id => r0,
+            in("r1") block_to_merge_2_local_id,
+            in("r2") mpu_region_nb,
+        )
+    }
+
+    r0
+}
