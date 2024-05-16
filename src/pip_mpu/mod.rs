@@ -92,3 +92,16 @@ pub fn pip_add_memory_block(
 
     r0
 }
+
+#[inline]
+pub fn pip_remove_memory_block(block_to_remove_local_id: &*const u32) -> u32 {
+    let r0: u32;
+    unsafe {
+        asm!(
+            "svc #5",
+            inout("r0") block_to_remove_local_id => r0,
+        );
+    }
+
+    r0
+}
