@@ -1,0 +1,29 @@
+# Basic template informations
+[template]
+name = "pip-mpu-partition"
+author = "Michael Hauspie <michael.hauspie@univ-lille.fr>"
+version = "0.1.0"
+
+# Exclude paths you do not want copy/pasted in the generated project
+exclude = [
+    "./target"
+]
+
+# Notes to display at the end of the generation
+notes = """
+Run cargo make to generate the partition image
+"""
+
+[hooks]
+# Commands to be executed before scaffolding, from within the generated project
+pre = [
+]
+# Commands to be executed after scaffolding, from within the generated project
+post = [
+]
+
+# Parameters are basically all the variables needed to generate your template using templating.
+# It will be displayed as prompt to interact with user (thanks to the message subfield).
+# All the parameters will be available in your templates as variables (example: `{{description}}`).
+#[parameters]
+# [parameters.name] is already reserved

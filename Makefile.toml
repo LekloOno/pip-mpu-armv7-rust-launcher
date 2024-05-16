@@ -1,0 +1,83 @@
+[tasks.default]
+alias = "pip"
+
+[tasks.test]
+disabled = true
+
+[env]
+RELOCATOR_DIR = "relocation_tools/relocator"
+CRT0 = "${RELOCATOR_DIR}/crt0.bin"
+TARGET = "thumbv7em-none-eabihf"
+ELF_NAME = "root" # to change with {{crate_name}}"
+ROM_START = "0x7100"
+
+[env.development]
+BUILD_PROFILE = "dev"
+ARTEFACT_FOLDER = "target/${TARGET}/debug"
+
+[env.release]
+BUILD_PROFILE = "release"
+ARTEFACT_FOLDER = "target/${TARGET}/release"
+
+[tasks.pip]
+dependencies = [
+ "finalbin",
+]
+
+
+[tasks.format]
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--", "--emit=files"]
+
+[tasks.build]
+command = "cargo"
+args = ["build", "--profile=${BUILD_PROFILE}"]
+dependencies = ["format"]
+
+
+[tasks.doc]
+command = "cargo"
+args = ["doc", "--no-deps", "--open", "--document-private-items"]
+
+[tasks.clean]
+dependencies = ["crt0clean"]
+
+# CRT0 Related tasks
+
+[tasks.crt0clean]
+command = "make"
+args = ["-C", "${RELOCATOR_DIR}", "clean"]
+
+[tasks.crt0]
+command = "make"
+args = ["-C", "${RELOCATOR_DIR}"]
+
+[tasks.gdbinit]
+script = '''
+"${RELOCATOR_DIR}/gdbinit.py" "${RELOCATOR_DIR}/crt0.elf" "${ARTEFACT_FOLDER}/${ELF_NAME}" "${ARTEFACT_FOLDER}/symbols.bin" "${ARTEFACT_FOLDER}/relocation.bin" > gdbinit
+'''
+dependencies = ["crt0", "build", "symbols", "relocation"]
+
+[tasks.symbols]
+script = '''
+"${RELOCATOR_DIR}/symbols.py" "${ARTEFACT_FOLDER}/${ELF_NAME}" > "${ARTEFACT_FOLDER}/symbols.bin"
+'''
+dependencies = ["build"]
+
+[tasks.relocation]
+script = '''
+"${RELOCATOR_DIR}/relocation.py" "${ARTEFACT_FOLDER}/${ELF_NAME}" > "${ARTEFACT_FOLDER}/relocation.bin"
+'''
+dependencies = ["build"]
+
+[tasks.partitionbin]
+command = "${RELOCATOR_DIR}/vtable.py"
+args = ["${ARTEFACT_FOLDER}/${ELF_NAME}", "${ROM_START}", "${RELOCATOR_DIR}/crt0.bin", "${ARTEFACT_FOLDER}/symbols.bin", "${ARTEFACT_FOLDER}/relocation.bin", "${ARTEFACT_FOLDER}/${ELF_NAME}.bin"]
+dependencies = ["build", "crt0", "symbols", "relocation"]
+
+[tasks.finalbin]
+dependencies = ["build", "crt0", "symbols", "relocation", "partitionbin", "gdbinit"]
+script = '''
+cat "${RELOCATOR_DIR}/crt0.bin" "${ARTEFACT_FOLDER}/symbols.bin" "${ARTEFACT_FOLDER}/relocation.bin" "${ARTEFACT_FOLDER}/${ELF_NAME}.bin" > "partition-${BUILD_PROFILE}.bin" && cat ../../pipcore-mpu/pip.bin "partition-${BUILD_PROFILE}.bin" > pip+root.bin
+'''

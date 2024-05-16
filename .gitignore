@@ -1,1 +1,6 @@
 /target
+pip_venv
+partition-dev.bin
+partition-release.bin
+gdbinit
+pip+root.bin

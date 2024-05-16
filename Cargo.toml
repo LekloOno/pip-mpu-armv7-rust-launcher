@@ -1,6 +1,16 @@
 [package]
-name = "pip-mpu-armv7-rust-launcher"
+name = "root"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+mini-format = {git = "https://gitlab.univ-lille.fr/2xs/mini-format.git"}
+
+[profile.dev]
+panic = "abort"
+debug = false
+
+[profile.release]
+panic = "abort"
+lto = true
