@@ -198,3 +198,26 @@ pub fn pip_set_vidt(part_desc_block_id: &*const u32, vidt_block_local_id: &*cons
 
     vidt_block_added
 }
+
+#[inline]
+pub fn pip_yield(
+    callee_part_desc_block_id: &*const u32,
+    user_target_interrupt: u32,
+    user_caller_context_save_index: u32,
+    flags_on_yield: u32,
+    flags_on_wake: u32,
+) -> u32 {
+    let could_yield: u32;
+    unsafe {
+        asm!(
+            "svc #12",
+            inout("r0") callee_part_desc_block_id => could_yield,
+            in("r1") user_target_interrupt,
+            in("r2") user_caller_context_save_index,
+            in("r3") flags_on_yield,
+            in("r4") flags_on_wake,
+        );
+    }
+
+    could_yield
+}
