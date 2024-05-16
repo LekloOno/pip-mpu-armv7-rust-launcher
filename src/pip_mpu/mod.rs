@@ -52,3 +52,22 @@ pub fn pip_merge_memory_blocks(
 
     r0
 }
+
+#[inline]
+pub fn pip_prepare(
+    part_desc_block_id: *const u32,
+    projected_slots_nb: i32,
+    requisitionned_block_local_id: *const u32,
+) -> u32 {
+    let r0: u32;
+    unsafe {
+        asm!(
+            "svc #3",
+            inout("r0") part_desc_block_id => r0,
+            in("r1") projected_slots_nb,
+            in("r2") requisitionned_block_local_id,
+        )
+    }
+
+    r0
+}
