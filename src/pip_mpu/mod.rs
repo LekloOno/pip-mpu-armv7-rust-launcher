@@ -131,3 +131,22 @@ pub fn pip_collect(part_desc_block_id: &*const u32) -> *const u32 {
 
     r0
 }
+
+#[inline]
+pub fn pip_map_mpu(
+    part_desc_block_id: &*const u32,
+    block_to_map_local_id: &*const u32,
+    mpu_region_nb: i32,
+) -> u32 {
+    let r0: u32;
+    unsafe {
+        asm!(
+            "svc #8",
+            inout("r0") part_desc_block_id => r0,
+            in("r1") block_to_map_local_id,
+            in("r2") mpu_region_nb,
+        );
+    }
+
+    r0
+}
