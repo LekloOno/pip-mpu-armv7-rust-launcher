@@ -71,3 +71,24 @@ pub fn pip_prepare(
 
     r0
 }
+
+#[inline]
+pub fn pip_add_memory_block(
+    child_part_desc_block_local_id: *const u32,
+    block_to_share_local_id: *const u32,
+    r: u32,
+    w: u32,
+    e: u32,
+) -> *const u32 {
+    let r0: *const u32;
+    unsafe {
+        asm!(
+            "svc #4",
+            inout("r0") child_part_desc_block_local_id => r0,
+            in("r1") block_to_share_local_id,
+            in("r2") ((r & 1) << 2) | ((w & 1) << 1) | (e & 1),
+        );
+    }
+
+    r0
+}
