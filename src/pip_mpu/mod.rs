@@ -247,3 +247,13 @@ pub fn pip_get_self_int_state() -> u32 {
 
     interrupt_state
 }
+
+#[inline]
+pub fn pip_set_int_state(interrupt_state: u32) {
+    unsafe {
+        asm!(
+            "svc #15",
+            in("r0") interrupt_state,
+        );
+    }
+}
