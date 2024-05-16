@@ -105,3 +105,16 @@ pub fn pip_remove_memory_block(block_to_remove_local_id: &*const u32) -> u32 {
 
     r0
 }
+
+#[inline]
+pub fn pip_delete_partition(child_part_desc_block_local_id: &*const u32) -> u32 {
+    let r0: u32;
+    unsafe {
+        asm!(
+            "svc #6",
+            inout("r0") child_part_desc_block_local_id => r0,
+        );
+    }
+
+    r0
+}
