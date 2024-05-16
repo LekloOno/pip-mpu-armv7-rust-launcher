@@ -3,16 +3,16 @@ use core::arch::asm;
 
 #[inline]
 pub fn pip_create_partition(block_local_id: &*const u32) -> u32 {
-    let r0: u32;
+    let could_create_partition: u32;
     unsafe {
         //no memory clobber, it is default behavior in rust
         asm!(
             "svc #0",
-            inout("r0") block_local_id => r0,
+            inout("r0") block_local_id => could_create_partition,
         );
     }
 
-    r0
+    could_create_partition
 }
 
 #[inline]
@@ -21,17 +21,17 @@ pub fn pip_cut_memory_block(
     cut_addr: &*const u32,
     mpu_region_nb: i32,
 ) -> *const u32 {
-    let r0: *const u32;
+    let id_new_sub_block: *const u32;
     unsafe {
         asm!(
             "svc #1",
-            inout("r0") block_to_cut_local_id => r0,
+            inout("r0") block_to_cut_local_id => id_new_sub_block,
             in("r1") cut_addr,
             in("r2") mpu_region_nb,
         );
     }
 
-    r0
+    id_new_sub_block
 }
 
 #[inline]
@@ -40,17 +40,17 @@ pub fn pip_merge_memory_blocks(
     block_to_merge_2_local_id: &*const u32,
     mpu_region_nb: i32,
 ) -> *const u32 {
-    let r0: *const u32;
+    let id_block_to_merge_1: *const u32;
     unsafe {
         asm!(
             "svc #2",
-            inout("r0") block_to_merge_1_local_id => r0,
+            inout("r0") block_to_merge_1_local_id => id_block_to_merge_1,
             in("r1") block_to_merge_2_local_id,
             in("r2") mpu_region_nb,
         );
     }
 
-    r0
+    id_block_to_merge_1
 }
 
 #[inline]
@@ -59,17 +59,17 @@ pub fn pip_prepare(
     projected_slots_nb: i32,
     requisitionned_block_local_id: &*const u32,
 ) -> u32 {
-    let r0: u32;
+    let could_prepare: u32;
     unsafe {
         asm!(
             "svc #3",
-            inout("r0") part_desc_block_id => r0,
+            inout("r0") part_desc_block_id => could_prepare,
             in("r1") projected_slots_nb,
             in("r2") requisitionned_block_local_id,
         );
     }
 
-    r0
+    could_prepare
 }
 
 #[inline]
@@ -80,56 +80,56 @@ pub fn pip_add_memory_block(
     w: u32,
     e: u32,
 ) -> *const u32 {
-    let r0: *const u32;
+    let block_to_share_child_entry_addr: *const u32;
     unsafe {
         asm!(
             "svc #4",
-            inout("r0") child_part_desc_block_local_id => r0,
+            inout("r0") child_part_desc_block_local_id => block_to_share_child_entry_addr,
             in("r1") block_to_share_local_id,
             in("r2") ((r & 1) << 2) | ((w & 1) << 1) | (e & 1),
         );
     }
 
-    r0
+    block_to_share_child_entry_addr
 }
 
 #[inline]
 pub fn pip_remove_memory_block(block_to_remove_local_id: &*const u32) -> u32 {
-    let r0: u32;
+    let could_remove_memory_block: u32;
     unsafe {
         asm!(
             "svc #5",
-            inout("r0") block_to_remove_local_id => r0,
+            inout("r0") block_to_remove_local_id => could_remove_memory_block,
         );
     }
 
-    r0
+    could_remove_memory_block
 }
 
 #[inline]
 pub fn pip_delete_partition(child_part_desc_block_local_id: &*const u32) -> u32 {
-    let r0: u32;
+    let could_delete_partition: u32;
     unsafe {
         asm!(
             "svc #6",
-            inout("r0") child_part_desc_block_local_id => r0,
+            inout("r0") child_part_desc_block_local_id => could_delete_partition,
         );
     }
 
-    r0
+    could_delete_partition
 }
 
 #[inline]
 pub fn pip_collect(part_desc_block_id: &*const u32) -> *const u32 {
-    let r0: *const u32;
+    let collected_structure_block_id: *const u32;
     unsafe {
         asm!(
             "svc #7",
-            inout("r0") part_desc_block_id => r0,
+            inout("r0") part_desc_block_id => collected_structure_block_id,
         );
     }
 
-    r0
+    collected_structure_block_id
 }
 
 #[inline]
@@ -138,15 +138,15 @@ pub fn pip_map_mpu(
     block_to_map_local_id: &*const u32,
     mpu_region_nb: i32,
 ) -> u32 {
-    let r0: u32;
+    let could_map_mpu: u32;
     unsafe {
         asm!(
             "svc #8",
-            inout("r0") part_desc_block_id => r0,
+            inout("r0") part_desc_block_id => could_map_mpu,
             in("r1") block_to_map_local_id,
             in("r2") mpu_region_nb,
         );
     }
 
-    r0
+    could_map_mpu
 }
