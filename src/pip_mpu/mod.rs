@@ -221,3 +221,16 @@ pub fn pip_yield(
 
     could_yield
 }
+
+#[inline]
+pub fn pip_get_int_state(child_part_desc_block_local_id: *const u32) -> u32 {
+    let interrupt_state: u32;
+    unsafe {
+        asm!(
+            "svc #13",
+            inout("r0") child_part_desc_block_local_id => interrupt_state,
+        );
+    }
+
+    interrupt_state
+}
