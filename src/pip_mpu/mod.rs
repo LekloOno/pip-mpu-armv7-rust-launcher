@@ -168,9 +168,9 @@ pub fn pip_read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> *con
 
 #[inline]
 pub fn pip_find_block(
-    part_desc_block_id: *const u32,
-    addr_in_block: *const u32,
-    block_addr: *const BlockOrError,
+    part_desc_block_id: &*const u32,
+    addr_in_block: &*const u32,
+    block_addr: &*const BlockOrError,
 ) -> u32 {
     let could_find_block: u32;
     unsafe {
@@ -183,4 +183,18 @@ pub fn pip_find_block(
     }
 
     could_find_block
+}
+
+#[inline]
+pub fn pip_set_vidt(part_desc_block_id: &*const u32, vidt_block_local_id: &*const u32) -> u32 {
+    let vidt_block_added: u32;
+    unsafe {
+        asm!(
+            "svc #11",
+            inout("r0") part_desc_block_id => vidt_block_added,
+            in("r1") vidt_block_local_id,
+        );
+    }
+
+    vidt_block_added
 }
