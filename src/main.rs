@@ -3,6 +3,8 @@
 #![no_main]
 #![feature(asm_const)]
 
+mod pip_mpu;
+
 pub mod io;
 use core::cell::Cell;
 use core::ffi::CStr;
