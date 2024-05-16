@@ -150,3 +150,17 @@ pub fn pip_map_mpu(
 
     could_map_mpu
 }
+
+#[inline]
+pub fn pip_read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> *const u32 {
+    let id_block: *const u32;
+    unsafe {
+        asm!(
+            "svc #9",
+            inout("r0") part_desc_block_id => id_block,
+            in("r1") mpu_region_nb,
+        );
+    }
+
+    id_block
+}
