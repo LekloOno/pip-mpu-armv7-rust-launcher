@@ -118,3 +118,16 @@ pub fn pip_delete_partition(child_part_desc_block_local_id: &*const u32) -> u32 
 
     r0
 }
+
+#[inline]
+pub fn pip_collect(part_desc_block_id: &*const u32) -> *const u32 {
+    let r0: *const u32;
+    unsafe {
+        asm!(
+            "svc #7",
+            inout("r0") part_desc_block_id => r0,
+        );
+    }
+
+    r0
+}
