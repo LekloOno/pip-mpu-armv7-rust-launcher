@@ -234,3 +234,16 @@ pub fn pip_get_int_state(child_part_desc_block_local_id: *const u32) -> u32 {
 
     interrupt_state
 }
+
+#[inline]
+pub fn pip_get_self_int_state() -> u32 {
+    let interrupt_state: u32;
+    unsafe {
+        asm!(
+            "svc #14",
+            out("r0") interrupt_state,
+        );
+    }
+
+    interrupt_state
+}
