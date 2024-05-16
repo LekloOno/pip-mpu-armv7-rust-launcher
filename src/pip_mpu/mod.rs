@@ -28,7 +28,7 @@ pub fn pip_cut_memory_block(
             inout("r0") block_to_cut_local_id => r0,
             in("r1") cut_addr,
             in("r2") mpu_region_nb,
-        )
+        );
     }
 
     r0
@@ -47,7 +47,7 @@ pub fn pip_merge_memory_blocks(
             inout("r0") block_to_merge_1_local_id => r0,
             in("r1") block_to_merge_2_local_id,
             in("r2") mpu_region_nb,
-        )
+        );
     }
 
     r0
@@ -66,7 +66,7 @@ pub fn pip_prepare(
             inout("r0") part_desc_block_id => r0,
             in("r1") projected_slots_nb,
             in("r2") requisitionned_block_local_id,
-        )
+        );
     }
 
     r0
