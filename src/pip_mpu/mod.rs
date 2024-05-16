@@ -271,3 +271,14 @@ pub fn pip_in(register_id: u32) -> u32 {
 
     data
 }
+
+#[inline]
+pub fn pip_out(register_id: u32, value: u32) {
+    unsafe {
+        asm!(
+            "svc #17",
+            in("r0") register_id,
+            in("r1") value,
+        );
+    }
+}
