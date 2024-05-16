@@ -257,3 +257,17 @@ pub fn pip_set_int_state(interrupt_state: u32) {
         );
     }
 }
+
+#[inline]
+pub fn pip_in(register_id: u32) -> u32 {
+    let data: u32;
+    unsafe {
+        asm!(
+            "svc #16",
+            out("r1") data,
+            in("r0") register_id,
+        );
+    }
+
+    data
+}
