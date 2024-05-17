@@ -73,3 +73,44 @@ pub fn merge_memory_blocks(
     );
     new_addr.is_null().then(|| new_addr)
 }
+
+/// Brief.
+///     Prepares the current partition or child to receive a projected_slots_nb of blocks
+///     
+/// Description.
+///     The [prepare] system call prepares the partition of `part_desc_block_id`
+///		(current partition or child) to receive `projected_slots_nb` of blocks and use the
+///		`requisitionned_block_local_id` as a metadata structure IF NEEDED => if there isn't enough
+///                                                                     free slots in the current 
+///                                                                     kernel structure.
+///
+///     e.g. this will prepare `requisitionned_block_local_id` to be a kernel structure added to the
+///		kernel structure list of the partition `part_desc_block_id`
+///        - if enough free slots to receive `projected_slots_nb` then won't do anything
+///				- if not enough free slots then prepare the block
+///        - if `projected_slots_nb` not specified then prepare the block whatever the nb of
+///					free slots
+///
+/// *   `part_desc_block_id`            - The block to prepare within the current or child partition
+/// *   `projected_slots_nb`            - The number of requested slots, None to force prepare
+/// *   `requisitionned_block_local_id` - The block used as the new kernel structure
+///
+/// Returns
+///     Ok() if the operation is valid, Err() Otherwise
+///     TODO :
+///     -   Ok(bool) - contains true if the requisitionned block was used, false otherwise
+///     -   Err() - ..... Many cases to determine
+pub fn prepare(
+    part_desc_block_id: &*const u32,
+    projected_slots_nb: Option<i32>,
+    requisitionned_block_local_id: &*const u32,
+) -> Result<(), ()> {
+    let valid = pip_core_mpu::pip_prepare(
+        part_desc_block_id,
+        projected_slots_nb.unwrap_or_else(|| -1),
+        requisitionned_block_local_id,
+    ) & 1
+        == 1;
+
+    valid.then(|| {}).ok_or(())
+}
