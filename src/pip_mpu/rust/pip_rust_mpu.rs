@@ -17,7 +17,7 @@ pub fn create_partition(block_local_id: &*const u32) -> bool {
 }
 
 /// Brief.
-///     Cuts the given memory block
+///     Cuts the given memory block.
 ///
 /// Description.
 ///     The [cutMemoryBlock] system call cuts the memory block `block_to_cut_local_id`
@@ -31,7 +31,6 @@ pub fn create_partition(block_local_id: &*const u32) -> bool {
 ///
 /// Returns
 ///     An Option which's Some variant contains the newly created subblock's id
-
 pub fn cut_memory_block(
     block_to_cut_local_id: &*const u32,
     cut_addr: &*const u32,
@@ -39,5 +38,34 @@ pub fn cut_memory_block(
 ) -> Option<*const u32> {
     let new_addr =
         pip_core_mpu::pip_cut_memory_block(block_to_cut_local_id, cut_addr, mpu_region_nb);
+    new_addr.is_null().then(|| new_addr)
+}
+
+/// Brief.
+///     Merge the given memory blocks to the given mpu region number.
+///
+/// Description.
+///     The [mergeMemoryBlocks] system call merges `block_to_merge_1_local_id` and
+///     `block_to_merge_2_local_id` together.
+///     The two blocks have been cut before so @block_to_merge_1_local_id < @block_to_merge_2_local_id.
+///     The merged block is placed in the physical MPU region of the current partition
+///     if the `mpu_region_nb` is a valid region number.
+///
+/// *   `block_to_merge_1_local_id` - The local id of the first block to merge
+/// *   `block_to_merge_2_local_id` - The local id of the second block to merge
+/// *   `mpu_region_nb`             - The mpu regio number
+///
+/// Returns
+///     An Option which's Some variant contains the newly created merged block id
+pub fn merge_memory_blocks(
+    block_to_merge_1_local_id: &*const u32,
+    block_to_merge_2_local_id: &*const u32,
+    mpu_region_nb: i32,
+) -> Option<*const u32> {
+    let new_addr = pip_core_mpu::pip_merge_memory_blocks(
+        block_to_merge_1_local_id,
+        block_to_merge_2_local_id,
+        mpu_region_nb,
+    );
     new_addr.is_null().then(|| new_addr)
 }
