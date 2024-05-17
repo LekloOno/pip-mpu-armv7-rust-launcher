@@ -30,7 +30,7 @@ pub fn create_partition(block_local_id: &*const u32) -> bool {
 /// *   `mpu_region_nb`         - The mpu region number
 ///
 /// Returns
-///     An Option which's Some variant contains the newly created subblock's id
+///     An Option whose Some variant contains the newly created subblock's id
 pub fn cut_memory_block(
     block_to_cut_local_id: &*const u32,
     cut_addr: &*const u32,
@@ -56,7 +56,7 @@ pub fn cut_memory_block(
 /// *   `mpu_region_nb`             - The mpu regio number
 ///
 /// Returns
-///     An Option which's Some variant contains the newly created merged block id
+///     An Option whose Some variant contains the newly created merged block id
 pub fn merge_memory_blocks(
     block_to_merge_1_local_id: &*const u32,
     block_to_merge_2_local_id: &*const u32,
@@ -69,3 +69,5 @@ pub fn merge_memory_blocks(
     );
     new_addr.is_null().then(|| new_addr)
 }
+
+
