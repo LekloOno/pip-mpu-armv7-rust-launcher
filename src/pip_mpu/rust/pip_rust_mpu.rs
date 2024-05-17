@@ -11,10 +11,12 @@ use crate::pip_mpu::core::pip_core_mpu;
 /// *   `block_local_id` - The block to become the child partition descriptor
 ///
 /// Returns
-///     An Ok Result if the operation was successful, an emtpy Err otherwise.
-pub fn create_partition(block_local_id: &*const u32) -> Result<&*const u32, ()> {
+///     A Result such as in case of :
+///         - Success   : Empty Ok()
+///         - Error     : Empty Err()
+pub fn create_partition(block_local_id: &*const u32) -> Result<(), ()> {
     if (pip_core_mpu::pip_create_partition(block_local_id) & 1) == 1 {
-        Ok(block_local_id)
+        Ok(())
     } else {
         Err(())
     }
@@ -34,15 +36,20 @@ pub fn create_partition(block_local_id: &*const u32) -> Result<&*const u32, ()> 
 /// *   `mpu_region_nb`         - The mpu region number
 ///
 /// Returns
-///     A Some Option containing the newly created subblock's id if the operation was successful, None otherwise.
+///     A Result such as in case of :
+///         - Success   : Ok() containing the newly created subblock's local id
+///         - Error     : Empty Err()
 pub fn cut_memory_block(
     block_to_cut_local_id: &*const u32,
     cut_addr: &*const u32,
     mpu_region_nb: i32,
-) -> Option<*const u32> {
-    let new_addr =
+) -> Result<*const u32, ()> {
+    let subblock_local_id =
         pip_core_mpu::pip_cut_memory_block(block_to_cut_local_id, cut_addr, mpu_region_nb);
-    new_addr.is_null().then(|| new_addr)
+    subblock_local_id
+        .is_null()
+        .then(|| subblock_local_id)
+        .ok_or(())
 }
 
 /// Brief.
@@ -60,18 +67,22 @@ pub fn cut_memory_block(
 /// *   `mpu_region_nb`             - The mpu regio number
 ///
 /// Returns
-///     A Some Option containing the newly created merged block id if the operation is successful, None otherwise.
+///     A Result such as in case of :
+///         - Success   : Ok() containing the newly created merged block's local id
+///         - Error     : Empty Err()
 pub fn merge_memory_blocks(
     block_to_merge_1_local_id: &*const u32,
     block_to_merge_2_local_id: &*const u32,
     mpu_region_nb: i32,
 ) -> Option<*const u32> {
-    let new_addr = pip_core_mpu::pip_merge_memory_blocks(
+    let merged_block_local_id = pip_core_mpu::pip_merge_memory_blocks(
         block_to_merge_1_local_id,
         block_to_merge_2_local_id,
         mpu_region_nb,
     );
-    new_addr.is_null().then(|| new_addr)
+    merged_block_local_id
+        .is_null()
+        .then(|| merged_block_local_id)
 }
 
 /// Brief.
@@ -96,7 +107,10 @@ pub fn merge_memory_blocks(
 /// *   `requisitionned_block_local_id` - The block used as the new kernel structure
 ///
 /// Returns
-///     Ok() if the operation is valid, Err() Otherwise
+///     A Result such as in case of :
+///         - Valid Operation   : Empty Ok()
+///         - Unvalid Operation : Empty Err()
+///
 ///     TODO :
 ///     -   Ok(bool) - contains true if the requisitionned block was used, false otherwise
 ///     -   Err() - ..... Many cases to determine
@@ -131,8 +145,9 @@ pub fn prepare(
 /// *   x                               - ----execute---------------------------------------
 ///
 /// Returns
-///     Success - A Result containing the local id of the block in the child. (newly "mapped" id)
-///     Error - An Result containing an empty Error
+///     A Result such as in case of :
+///         - Success : Ok() containing the local id of the block in the child. (newly "mapped" id)
+///         - Error   : empty Err()
 pub fn add_memory_block(
     child_part_desc_block_local_id: &*const u32,
     block_to_share_local_id: &*const u32,
