@@ -11,9 +11,13 @@ use crate::pip_mpu::core::pip_core_mpu;
 /// *   `block_local_id` - The block to become the child partition descriptor
 ///
 /// Returns
-///     true if the operation was successful, false otherwise.
-pub fn create_partition(block_local_id: &*const u32) -> bool {
-    (pip_core_mpu::pip_create_partition(block_local_id) & 1) == 1
+///     An Ok Result if the operation was successful, an emtpy Err otherwise.
+pub fn create_partition(block_local_id: &*const u32) -> Result<&*const u32, ()> {
+    if (pip_core_mpu::pip_create_partition(block_local_id) & 1) == 1 {
+        Ok(block_local_id)
+    } else {
+        Err(())
+    }
 }
 
 /// Brief.
@@ -30,7 +34,7 @@ pub fn create_partition(block_local_id: &*const u32) -> bool {
 /// *   `mpu_region_nb`         - The mpu region number
 ///
 /// Returns
-///     An Option whose Some variant contains the newly created subblock's id
+///     A Some Option containing the newly created subblock's id if the operation was successful, None otherwise.
 pub fn cut_memory_block(
     block_to_cut_local_id: &*const u32,
     cut_addr: &*const u32,
@@ -56,7 +60,7 @@ pub fn cut_memory_block(
 /// *   `mpu_region_nb`             - The mpu regio number
 ///
 /// Returns
-///     An Option whose Some variant contains the newly created merged block id
+///     A Some Option containing the newly created merged block id if the operation is successful, None otherwise.
 pub fn merge_memory_blocks(
     block_to_merge_1_local_id: &*const u32,
     block_to_merge_2_local_id: &*const u32,
@@ -69,5 +73,3 @@ pub fn merge_memory_blocks(
     );
     new_addr.is_null().then(|| new_addr)
 }
-
-
