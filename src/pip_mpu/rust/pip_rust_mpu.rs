@@ -81,7 +81,7 @@ pub fn merge_memory_blocks(
 ///     The [prepare] system call prepares the partition of `part_desc_block_id`
 ///		(current partition or child) to receive `projected_slots_nb` of blocks and use the
 ///		`requisitionned_block_local_id` as a metadata structure IF NEEDED => if there isn't enough
-///                                                                     free slots in the current 
+///                                                                     free slots in the current
 ///                                                                     kernel structure.
 ///
 ///     e.g. this will prepare `requisitionned_block_local_id` to be a kernel structure added to the
@@ -92,7 +92,7 @@ pub fn merge_memory_blocks(
 ///					free slots
 ///
 /// *   `part_desc_block_id`            - The block to prepare within the current or child partition
-/// *   `projected_slots_nb`            - The number of requested slots, None to force prepare
+/// *   `projected_slots_nb`            - The number of requested slots, do not specify to force prepare
 /// *   `requisitionned_block_local_id` - The block used as the new kernel structure
 ///
 /// Returns
@@ -100,6 +100,8 @@ pub fn merge_memory_blocks(
 ///     TODO :
 ///     -   Ok(bool) - contains true if the requisitionned block was used, false otherwise
 ///     -   Err() - ..... Many cases to determine
+/// ____
+/// Note : Note satisfied with the 'None' slots nb. Maybe an enum ? Looking for better ideas
 pub fn prepare(
     part_desc_block_id: &*const u32,
     projected_slots_nb: Option<i32>,
@@ -113,4 +115,41 @@ pub fn prepare(
         == 1;
 
     valid.then(|| {}).ok_or(())
+}
+
+/// Brief.
+///     Adds a memory block to a given child partition.
+///     
+/// Description.
+///     The [addMemoryBlock] system call adds a block to a child partition.
+///		The block is still accessible from the current partition (shared memory).
+///
+/// *   child_part_desc_block_local_id  - The local id of the child partition to share with
+/// *   block_to_share_local_id         - The local id of the block entry address where the block to share lies
+/// *   r                               - The reading rights to apply to the child partition
+/// *   w                               - ----writing---------------------------------------
+/// *   x                               - ----execute---------------------------------------
+///
+/// Returns
+///     Success - A Result containing the local id of the block in the child. (newly "mapped" id)
+///     Error - An Result containing an empty Error
+pub fn add_memory_block(
+    child_part_desc_block_local_id: &*const u32,
+    block_to_share_local_id: &*const u32,
+    r: bool,
+    w: bool,
+    x: bool,
+) -> Result<*const u32, ()> {
+    let added_block_local_id = pip_core_mpu::pip_add_memory_block(
+        child_part_desc_block_local_id,
+        block_to_share_local_id,
+        r as u32,
+        w as u32,
+        x as u32,
+    );
+
+    added_block_local_id
+        .is_null()
+        .then(|| added_block_local_id)
+        .ok_or(())
 }
