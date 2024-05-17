@@ -168,3 +168,32 @@ pub fn add_memory_block(
         .then(|| added_block_local_id)
         .ok_or(())
 }
+
+/// Brief.
+///
+/// Description.
+///     The [removeMemoryBlock] system call removes a block from a child partition.
+///     
+///     This operation succeeds for any shared memory block previously added, but
+///		fails if the purpose of the block is not shared memory anymore,
+///		in particular in such cases:
+///        - The block can't be removed if the child or its descendants use it
+///					(or part of it) as a kernel structure
+///        - The block can't be removed if the child's descendants cut the block
+///     An unnaccessible block can still be removed if it is cut and all its
+///     subbblocks are still accessible, == "can be merged back together"
+///
+/// *   block_to_remove_local_id - The local id of the block entry address where the block to remove lies
+///
+/// Returns
+///     A Result such as in case of :
+///         - Success   : Empty Ok()
+///         - Error     : Empty Err()
+#[inline]
+pub fn remove_memory_block(block_to_remove_local_id: &*const u32) -> Result<(), ()> {
+    if pip_core_mpu::pip_remove_memory_block(block_to_remove_local_id) & 1 == 1 {
+        Ok(())
+    } else {
+        Err(())
+    }
+}
