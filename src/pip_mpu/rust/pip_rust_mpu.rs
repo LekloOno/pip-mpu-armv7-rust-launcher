@@ -220,3 +220,28 @@ pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(
         Err(())
     }
 }
+
+/// TO DETERMINE : global or local block ids ?
+
+/// Brief.
+///     Collects and empty structure from the given partition, child or current.
+///
+/// Description.
+///     The [collect] system call collects an empty structure (if possible) from
+///		the partition `part_desc_block_id` (current partition or a child) and
+///		returns the retrieved block.
+///
+/// *   part_desc_block_id - The current partition or child's descriptor block id
+///
+/// Returns
+///     A Result such as in case of :
+///         - Success : Ok() containing the local id of collected structure block
+///         - Error   : empty Err()
+pub fn collect(part_desc_block_id: &*const u32) -> Result<*const u32, ()> {
+    let collected_block_local_id = pip_core_mpu::pip_collect(part_desc_block_id);
+
+    collected_block_local_id
+        .is_null()
+        .then(|| collected_block_local_id)
+        .ok_or(())
+}
