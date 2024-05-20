@@ -231,7 +231,7 @@ pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(
 ///		the partition `part_desc_block_id` (current partition or a child) and
 ///		returns the retrieved block.
 ///
-/// *   part_desc_block_id - The current partition or child's descriptor block id
+/// *   part_desc_block_id - The global or local id of the descriptor block of the current or child partition 
 ///
 /// Returns
 ///     A Result such as in case of :
@@ -256,7 +256,7 @@ pub fn collect(part_desc_block_id: &*const u32) -> Result<*const u32, ()> {
 ///		If the block is NULL, then the targeted MPU region is removed from the MPU.
 ///		If the block was already mapped, moves the block to the given MPU region.
 ///
-/// *   part_desc_block_id      - The current partition or a child's block local or global id 
+/// *   part_desc_block_id      - The global or local id of the descriptor block of the current or child partition 
 /// *   block_to_map_local_id   - The block to map local id
 /// *   mpu_region_nb           - The physical MPU region number
 ///
@@ -294,7 +294,7 @@ pub fn map_mpu(
 ///		the partition `part_desc_block_id` (current partition or a child) at the
 ///     `mpu_region_nb` MPU region.
 ///		
-/// *   part_desc_block_id  - The current partition or a child's block local or global id 
+/// *   part_desc_block_id  - The global or local id of the descriptor block of the current or child partition 
 /// *   mpu_region_nb       - The physical MPU region number
 ///
 /// Returns
@@ -302,11 +302,46 @@ pub fn map_mpu(
 ///         - Success : Ok() containing the local id of the block to read
 ///         - Error   : empty Err()
 ///             - No block found or error
-pub fn pip_read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> Result<*const u32, ()> {
+pub fn read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> Result<*const u32, ()> {
     let block_read_local_id = pip_core_mpu::pip_read_mpu(part_desc_block_id, mpu_region_nb);
 
     block_read_local_id
         .is_null()
         .then(|| block_read_local_id)
         .ok_or(())
+}
+
+/// Brief.
+///     Finds the block at the given source address in given partition block and insert it at the given target address.
+///
+/// Description.
+///     The [findBlock] system call finds the block of the provided `addr_in_block`
+///		by searching in the blocks list of the partition descriptor `part_desc_block_id`.
+///     Writes the found block at the `target_block_addr`.
+///
+/// *   part_desc_block_id  - The global or local id of the descriptor block of the current or child partition
+/// *   addr_in_block       - The address stemming from the block to find
+/// *   target_block_addr   - The address where to write the found block's attributes
+///
+/// Returns
+///     A Result such as in case of :
+///         - Success   : Empty Ok()
+///         - Error     : Empty Err()
+///             `part_desc_block_id` is not a child nor current partition
+///             `addr_in_block` not in partition of `part_desc_block_id`
+///             `target_block_addr` not in partition of `part_desc_block_id`
+pub fn find_block(
+    part_desc_block_id: &*const u32,
+    addr_in_block: &*const u32,
+    block_addr: &*const BlockOrError,
+) -> Result<(), ()> {
+    if pip_core_mpu::pip_find_block(
+        part_desc_block_id,
+        addr_in_block,
+        block_addr
+    ) & 1 == 1 {
+        Ok(())
+    } else {
+        Err(())
+    }
 }
