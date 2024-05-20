@@ -283,3 +283,30 @@ pub fn map_mpu(
         Err(())
     }
 }
+
+/// TO DETERMINE : Errors ? how are they returned ? are they ?
+
+/// Brief.
+///     Reads the content of the given mpu region.
+///
+/// Description.
+///     The [readMPU] system call reads the content of the physical MPU owned by
+///		the partition `part_desc_block_id` (current partition or a child) at the
+///     `mpu_region_nb` MPU region.
+///		
+/// *   part_desc_block_id  - The current partition or a child's block local or global id 
+/// *   mpu_region_nb       - The physical MPU region number
+///
+/// Returns
+///     A Result such as in case of :
+///         - Success : Ok() containing the local id of the block to read
+///         - Error   : empty Err()
+///             - No block found or error
+pub fn pip_read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> Result<*const u32, ()> {
+    let block_read_local_id = pip_core_mpu::pip_read_mpu(part_desc_block_id, mpu_region_nb);
+
+    block_read_local_id
+        .is_null()
+        .then(|| block_read_local_id)
+        .ok_or(())
+}
