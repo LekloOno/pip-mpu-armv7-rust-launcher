@@ -189,9 +189,32 @@ pub fn add_memory_block(
 ///     A Result such as in case of :
 ///         - Success   : Empty Ok()
 ///         - Error     : Empty Err()
-#[inline]
 pub fn remove_memory_block(block_to_remove_local_id: &*const u32) -> Result<(), ()> {
     if pip_core_mpu::pip_remove_memory_block(block_to_remove_local_id) & 1 == 1 {
+        Ok(())
+    } else {
+        Err(())
+    }
+}
+
+/// Brief.
+///     Deletes the specitfied partition from the current partition.
+///
+/// Description.
+///     The [deletePartition] system call deletes the partition `child_part_desc_block_local_id`
+///		which is a child of the current partition, e.g. prunes the partition tree by removing
+///		all references of the child and its respective blocks from the current partition.
+/// 
+/// *   child_part_desc_block_local_id - The local id of the descriptor block of the child to delete
+///
+/// Returns
+///     A Result such as in case of :
+///         - Success   : Empty Ok()
+///         - Error     : Empty Err()
+///             Null adress
+///             Not a child partition
+pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(), ()> {
+    if pip_core_mpu::pip_delete_partition(child_part_desc_block_local_id) & 1 == 1 {
         Ok(())
     } else {
         Err(())
