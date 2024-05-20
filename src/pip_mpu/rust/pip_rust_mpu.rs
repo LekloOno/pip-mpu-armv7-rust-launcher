@@ -245,3 +245,41 @@ pub fn collect(part_desc_block_id: &*const u32) -> Result<*const u32, ()> {
         .then(|| collected_block_local_id)
         .ok_or(())
 }
+
+/// Brief.
+///     Maps the given block of the given partition to the given MPU region.
+///
+/// Description.
+///     The [mapMPU] system call maps the `block_to_map_local_id` block owned by
+///		the partition `part_desc_block_id` (current partition or a child) in the
+///     `mpu_region_nb` MPU region.
+///		If the block is NULL, then the targeted MPU region is removed from the MPU.
+///		If the block was already mapped, moves the block to the given MPU region.
+///
+/// *   part_desc_block_id      - The current partition or a child's block local or global id 
+/// *   block_to_map_local_id   - The block to map local id
+/// *   mpu_region_nb           - The physical MPU region number
+///
+/// Returns
+///     A Result such as in case of :
+///         - Did map the given block   : Empty Ok()
+///         - Other cases               : Empty Err()
+///             - No block to map specified                             - block removed from the given region nb
+///             - `block_to_map_local_id` is not accessible             - block removed from the given region nb
+///             - `part_desc_block_id` not current nor child partition  - nothing
+///             - `mpu_region_nb` is not a valid region number          - nothing
+pub fn map_mpu(
+    part_desc_block_id: &*const u32,
+    block_to_map_local_id: &*const u32,
+    mpu_region_nb: i32,
+) -> Result<(), ()> {
+    if pip_core_mpu::pip_map_mpu(
+        part_desc_block_id,
+        block_to_map_local_id,
+        mpu_region_nb
+    ) & 1 == 1 {
+        Ok(())
+    } else {
+        Err(())
+    }
+}
