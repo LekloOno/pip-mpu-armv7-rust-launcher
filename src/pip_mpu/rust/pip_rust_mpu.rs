@@ -1,4 +1,5 @@
 use crate::pip_mpu::core::pip_core_mpu;
+use crate::pip_mpu::core::pip_items::BlockOrError;
 
 /// Brief.
 ///     Creates a new child
@@ -204,7 +205,7 @@ pub fn remove_memory_block(block_to_remove_local_id: &*const u32) -> Result<(), 
 ///     The [deletePartition] system call deletes the partition `child_part_desc_block_local_id`
 ///		which is a child of the current partition, e.g. prunes the partition tree by removing
 ///		all references of the child and its respective blocks from the current partition.
-/// 
+///
 /// *   child_part_desc_block_local_id - The local id of the descriptor block of the child to delete
 ///
 /// Returns
@@ -229,7 +230,7 @@ pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(
 ///		the partition `part_desc_block_id` (current partition or a child) and
 ///		returns the retrieved block.
 ///
-/// *   part_desc_block_id - The global or local id of the descriptor block of the current or child partition 
+/// *   part_desc_block_id - The global or local id of the descriptor block of the current or child partition
 ///
 /// Returns
 ///     A Result such as in case of :
@@ -254,7 +255,7 @@ pub fn collect(part_desc_block_id: &*const u32) -> Result<*const u32, ()> {
 ///		If the block is NULL, then the targeted MPU region is removed from the MPU.
 ///		If the block was already mapped, moves the block to the given MPU region.
 ///
-/// *   part_desc_block_id      - The global or local id of the descriptor block of the current or child partition 
+/// *   part_desc_block_id      - The global or local id of the descriptor block of the current or child partition
 /// *   block_to_map_local_id   - The block to map local id
 /// *   mpu_region_nb           - The physical MPU region number
 ///
@@ -271,11 +272,8 @@ pub fn map_mpu(
     block_to_map_local_id: &*const u32,
     mpu_region_nb: i32,
 ) -> Result<(), ()> {
-    if pip_core_mpu::pip_map_mpu(
-        part_desc_block_id,
-        block_to_map_local_id,
-        mpu_region_nb
-    ) & 1 == 1 {
+    if pip_core_mpu::pip_map_mpu(part_desc_block_id, block_to_map_local_id, mpu_region_nb) & 1 == 1
+    {
         Ok(())
     } else {
         Err(())
@@ -289,8 +287,8 @@ pub fn map_mpu(
 ///     The [readMPU] system call reads the content of the physical MPU owned by
 ///		the partition `part_desc_block_id` (current partition or a child) at the
 ///     `mpu_region_nb` MPU region.
-///		
-/// *   part_desc_block_id  - The global or local id of the descriptor block of the current or child partition 
+///
+/// *   part_desc_block_id  - The global or local id of the descriptor block of the current or child partition
 /// *   mpu_region_nb       - The physical MPU region number
 ///
 /// Returns
@@ -331,11 +329,7 @@ pub fn find_block(
     addr_in_block: &*const u32,
     block_addr: &*const BlockOrError,
 ) -> Result<(), ()> {
-    if pip_core_mpu::pip_find_block(
-        part_desc_block_id,
-        addr_in_block,
-        block_addr
-    ) & 1 == 1 {
+    if pip_core_mpu::pip_find_block(part_desc_block_id, addr_in_block, block_addr) & 1 == 1 {
         Ok(())
     } else {
         Err(())
@@ -366,11 +360,11 @@ pub fn find_block(
 ///             VIDT block overlaps
 ///             VIDT block is shared
 ///             VIDT block is shared in child
-pub fn set_vidt(part_desc_block_id: &*const u32, vidt_block_local_id: &*const u32) -> Result<(), ()> {
-    if pip_core_mpu::pip_set_vidt(
-        part_desc_block_id,
-        vidt_block_local_id
-    ) & 1 == 1 {
+pub fn set_vidt(
+    part_desc_block_id: &*const u32,
+    vidt_block_local_id: &*const u32,
+) -> Result<(), ()> {
+    if pip_core_mpu::pip_set_vidt(part_desc_block_id, vidt_block_local_id) & 1 == 1 {
         Ok(())
     } else {
         Err(())
