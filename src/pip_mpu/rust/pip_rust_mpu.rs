@@ -221,8 +221,6 @@ pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(
     }
 }
 
-/// TO DETERMINE : global or local block ids ?
-
 /// Brief.
 ///     Collects and empty structure from the given partition, child or current.
 ///
@@ -283,8 +281,6 @@ pub fn map_mpu(
         Err(())
     }
 }
-
-/// TO DETERMINE : Errors ? how are they returned ? are they ?
 
 /// Brief.
 ///     Reads the content of the given mpu region.
