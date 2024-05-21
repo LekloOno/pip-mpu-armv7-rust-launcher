@@ -341,3 +341,38 @@ pub fn find_block(
         Err(())
     }
 }
+
+/// Brief.
+///     Sets the VIDT address in the given partition.
+///     
+/// Description.
+///     The [setVIDT] system call sets the VIDT address in the partition
+///     descriptor structure of the current partition or one of its child.
+///
+/// *   part_desc_block_id  -   The global or local id of the block containing
+///                             the descriptor structure of the current or
+///                             child partition
+/// *   vidt_block_local_id -   The address of the VIDT or NULL to reset the
+///                             VIDT address to NULL in the partition descriptor
+///
+/// Returns
+///     A Result such as in case of :
+///         - Success   : Empty Ok()
+///         - Error     : Empty Err()
+///             `part_desc_block_id` is not a partition
+///             VIDT block is null
+///             VIDT block is not present
+///             VIDT block is not accessible
+///             VIDT block overlaps
+///             VIDT block is shared
+///             VIDT block is shared in child
+pub fn set_vidt(part_desc_block_id: &*const u32, vidt_block_local_id: &*const u32) -> Result<(), ()> {
+    if pip_core_mpu::pip_set_vidt(
+        part_desc_block_id,
+        vidt_block_local_id
+    ) & 1 == 1 {
+        Ok(())
+    } else {
+        Err(())
+    }
+}
