@@ -1,5 +1,6 @@
 use crate::pip_mpu::core::pip_core_mpu;
 use crate::pip_mpu::core::pip_items::BlockOrError;
+use crate::pip_mpu::core::pip_items::YieldCode;
 
 /// Brief.
 ///     Creates a new child
@@ -369,4 +370,74 @@ pub fn set_vidt(
     } else {
         Err(())
     }
+}
+
+/// Brief.
+///    Yields from a the current partition to a callee.
+///
+/// Description.
+///     The [yield] system call yields from the current partition (the caller)
+///     to its parent, itself or one of its children (the callee).
+///
+/// *   callee_part_desc_block_id       -   The local id of the block containing the descriptor structure of the partition to yield to
+///                                         0 means the partition descriptor structure of the parent of the current partition
+/// *   user_target_interrupt           -   The index of the VIDT which contains the address pointing to the location where the current
+///                                         context is to be RESTORED
+/// *   user_caller_context_save_index  -   The index of the VIDT which contains the address pointing to the location where the current
+///                                         is to be STORED
+///                                         0 means the context is not stored
+/// *   flags_on_yield                  -   The state the callee partition wishes to be on yield
+/// *   flags_on_wake                   -   The state the caller partition wishes to be on wake
+///
+/// Returns
+///     An Error code such as
+///             BASICS
+///              1  : The VIDT index of the CALLEE is greater than 32.
+///              2  : ----------------------CALLER--------------------
+///              3  : The CALLEE is not a child of the CALLER, although the given id is neither null or the current partition desc block.
+///              4  : The root partition tried to call its parent.
+///
+///             CALLER's VIDT
+///              5  : The address of the block containing the VIDT of the CALLER is null.
+///              6  : The block containing the VIDT of the CALLER does not have the present flag.
+///              7  : --------------------------------------------does not have the accessible flag.
+///              8  : --------------------------------------------is too small.
+///
+///             CALLEE's VIDT
+///              9  : The address of the block containing the VIDT of the CALLEE is null.
+///             10  : The block containing the VIDT of the CALLEE does not have the present flag.
+///             11  : --------------------------------------------does not have the accessible flag.
+///             12  : --------------------------------------------is too small.
+///
+///             CALLER's context
+///             13  : No block were found in the CALLER's address space that match the context address read from the VIDT.
+///             14  : The block containing the address to which the context of the CALLER is to be written does not have the present flag.
+///             15  : -------------------------------------------------------------------------------------------------------accessible flag.
+///             16  : -------------------------------------------------------------------------------------------------------writable flag.
+///             17  : The address of the CALLER's context, added to the size of a context, exceeds the end of the block.
+///             18  : The address to which the CALLER's context should be written is not alligned on a 4-byte boundary.
+///
+///             CALLEE's context
+///             19  : No block were found in the CALLEE's address space that match the context address read from the VIDT.
+///             20  : The block containing the address to which the context of the CALLEE is to be written does not have the present flag.
+///             21  : -------------------------------------------------------------------------------------------------------accessible flag.
+///             22  : -------------------------------------------------------------------------------------------------------readable flag.
+///             23  : The address of the CALLEE's context, added to the size of a context, exceeds the end of the block.
+///             24  : The address at which the CALLEE's context should be read is not aligned on a 4-byte boundary.
+///         Return value should be ignored when the context is restored.
+
+pub fn r#yield(
+    callee_part_desc_block_id: &*const u32,
+    user_target_interrupt: u32,
+    user_caller_context_save_index: u32,
+    flags_on_yield: u32,
+    flags_on_wake: u32,
+) -> YieldCode {
+    YieldCode::from_u32(pip_core_mpu::pip_yield(
+        callee_part_desc_block_id,
+        user_target_interrupt,
+        user_caller_context_save_index,
+        flags_on_yield,
+        flags_on_wake,
+    ))
 }

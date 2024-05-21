@@ -332,3 +332,160 @@ pub struct Interface {
     /// The end address of the unused RAM
     ram_end: *const u8,
 }
+
+pub enum YieldCode {
+    /*
+     * \brief The system call succeeds without error.
+     *
+     * \warning This value is never returned by the yield system
+     *          call, but is required for a future implementation
+     *          of the service in Coq.
+     */
+    YIELD_SUCCESS = 0,
+
+    /*
+     * \brief The VIDT index of the callee is greater than 32.
+     */
+    CALLEE_INVALID_VIDT_INDEX = 1,
+
+    /*
+     * \brief The VIDT index of the caller is greater than 32.
+     */
+    CALLER_INVALID_VIDT_INDEX = 2,
+
+    /*
+     * \brief The callee is not a child of the caller.
+     */
+    CALLEE_NOT_CHILD_OF_CALLER = 3,
+
+    /*
+     * \brief The root partition tried to call its parent.
+     */
+    CALLEE_IS_PARENT_OF_ROOT = 4,
+
+    /*
+     * \brief The address of the block containing the VIDT of the
+     *        caller is null.
+     */
+    CALLER_VIDT_IS_NULL = 5,
+
+    /*
+     * \brief The block containing the VIDT of the caller does not
+     *        have the present flag.
+     */
+    CALLER_VIDT_IS_NOT_PRESENT = 6,
+
+    /*
+     * \brief The block containing the VIDT of the caller does not
+     *        have the accessible flag.
+     */
+    CALLER_VIDT_IS_NOT_ACCESSIBLE = 7,
+
+    /*
+     * \brief The block containing the VIDT of the caller is too
+     *        small.
+     */
+    CALLER_VIDT_BLOCK_TOO_SMALL = 8,
+
+    /*
+     * \brief The address of the block containing the VIDT of the
+     *        callee is null.
+     */
+    CALLEE_VIDT_IS_NULL = 9,
+
+    /*
+     * \brief The block containing the VIDT of the callee does not
+     *        have the present flag.
+     */
+    CALLEE_VIDT_IS_NOT_PRESENT = 10,
+
+    /*
+     * \brief The block containing the VIDT of the callee does not
+     *        have the accessible flag.
+     */
+    CALLEE_VIDT_IS_NOT_ACCESSIBLE = 11,
+
+    /*
+     * \brief The block containing the VIDT of the callee is too
+     *        small.
+     */
+    CALLEE_VIDT_BLOCK_TOO_SMALL = 12,
+
+    /*
+     * \brief No block were found in the caller's address space
+     *        that match the context address read from the VIDT.
+     */
+    CALLER_CONTEXT_BLOCK_NOT_FOUND = 13,
+
+    /*
+     * \brief The block containing the address to which the context
+     *        of the caller is to be written does not have the
+     *        present flag.
+     */
+    CALLER_CONTEXT_BLOCK_IS_NOT_PRESENT = 14,
+
+    /*
+     * \brief The block containing the address to which the context
+     *        of the caller is to be written does not have the
+     *        accessible flag.
+     */
+    CALLER_CONTEXT_BLOCK_IS_NOT_ACCESSIBLE = 15,
+
+    /*
+     * \brief The block containing the address to which the context
+     *        of the caller is to be written does not have the
+     *        writable flag.
+     */
+    CALLER_CONTEXT_BLOCK_IS_NOT_WRITABLE = 16,
+
+    /*
+     * \brief The address of the caller's context, added to the
+     *        size of a context, exceeds the end of the block.
+     */
+    CALLER_CONTEXT_EXCEED_BLOCK_END = 17,
+
+    /*
+     * \brief The address to which the caller's context should be
+     *        written is not aligned on a 4-byte boundary.
+     */
+    CALLER_CONTEXT_MISALIGNED = 18,
+
+    /*
+     * \brief No block were found in the callee's address space
+     *        that match the context address read from the VIDT.
+     */
+    CALLEE_CONTEXT_BLOCK_NOT_FOUND = 19,
+
+    /*
+     * \brief The block containing the address at which the context
+     *        of the callee is to be read does not have the present
+     *        flag.
+     */
+    CALLEE_CONTEXT_BLOCK_IS_NOT_PRESENT = 20,
+
+    /*
+     * \brief The block containing the address at which the context
+     *        of the callee is to be read does not have the
+     *        accessible flag.
+     */
+    CALLEE_CONTEXT_BLOCK_IS_NOT_ACCESSIBLE = 21,
+
+    /*
+     * \brief The block containing the address at which the context
+     *        of the callee is to be read does not have the readable
+     *        flag.
+     */
+    CALLEE_CONTEXT_BLOCK_IS_NOT_READABLE = 22,
+
+    /*
+     * \brief The address of the callee's context, added to the size
+     *        of a context, exceeds the end of the block.
+     */
+    CALLEE_CONTEXT_EXCEED_BLOCK_END = 23,
+
+    /*
+     * \brief The address at which the callee's context should be
+     *        read is not aligned on a 4-byte boundary.
+     */
+    CALLEE_CONTEXT_MISALIGNED = 24,
+}
