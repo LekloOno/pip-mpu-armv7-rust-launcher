@@ -444,7 +444,7 @@ pub fn r#yield(
 
 /// Brief.
 ///     Gets the given partition interrupt state.
-/// 
+///
 /// Description.
 ///     The [getIntState] system call gets the child partition of `child_part_desc_block_local_id` interrupt state.
 ///     Root partition can truly hide the interrupts, where as child partition vitually hides them, the root partition
@@ -455,12 +455,33 @@ pub fn r#yield(
 ///     be done accordingly.
 ///
 /// *   child_part_desc_block_local_id   - The local id of the block containing the descriptor structure of the given child partition
-/// 
+///
 /// Returns
 ///     True if the interruption are masked for this partition, false otherwise.
 /// ____
 /// Note: This function referes to getIntState from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/pip_interrupt_calls.c?ref_type=heads#L40-54
-pub fn has_hidden_int(child_part_desc_block_local_id: *const u32) -> bool {
+pub fn child_has_hidden_int(child_part_desc_block_local_id: *const u32) -> bool {
     pip_core_mpu::pip_get_int_state(child_part_desc_block_local_id) & 1 == 1
+}
+
+/// Brief.
+///     Gets the current partition interrupt state.
+///
+/// Description.
+///     The [getSelfIntState] system call gets the current partition interrupt state.
+///     Root partition can truly hide the interrupts, where as child partition vitually hides them, the root partition
+///     should manage these interrupt states.
+///
+///     Reminder : Interrupts in pip-mpu flow down from pip, through root partition, down to the child partitions.
+///     To manage child interrupt states, the root partition can check them with this system call, and do whatever should
+///     be done accordingly.
+///
+/// Returns
+///     True if the interruption are masked for this partition, false otherwise.
+/// ____
+/// Note: This function referes to getIntState from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/pip_interrupt_calls.c?ref_type=heads#L56-64
+pub fn self_has_hidden_int() -> bool {
+    pip_core_mpu::pip_get_self_int_state() & 1 == 1
 }
