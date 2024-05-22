@@ -127,7 +127,7 @@ pub fn merge_memory_blocks(
 ///     -   Err() - ..... Many cases to determine
 /// ____
 /// Note:   Note satisfied with the 'None' slots nb. Maybe an enum ? Looking for better ideas
-/// 
+///
 ///         This function refers to prepare from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L322-468
 pub fn prepare(
@@ -422,8 +422,8 @@ pub fn set_vidt(
 /// *   user_caller_context_save_index  -   The index of the VIDT which contains the address pointing to the location where the current
 ///                                         is to be STORED
 ///                                         0 means the context is not stored
-/// *   flags_on_yield                  -   The state the callee partition wishes to be on yield
-/// *   flags_on_wake                   -   The state the caller partition wishes to be on wake
+/// *   enable_interrupt_on_yield       -   Wether or not the caller's interrupts should be enabled on yield
+/// *   enable_interrupt_on_wake        -   -----------------------------------------------------------wake
 ///
 /// Returns
 ///     An Error code such as
@@ -468,15 +468,23 @@ pub fn r#yield(
     callee_part_desc_block_id: &*const u32,
     user_target_interrupt: u32,
     user_caller_context_save_index: u32,
-    flags_on_yield: u32,
-    flags_on_wake: u32,
+    enable_interrupt_on_yield: bool,
+    enable_interrupt_on_wake: bool,
 ) -> YieldCode {
     YieldCode::from_u32(pip_core_mpu::pip_yield(
         callee_part_desc_block_id,
         user_target_interrupt,
         user_caller_context_save_index,
-        flags_on_yield,
-        flags_on_wake,
+        if enable_interrupt_on_yield {
+            1_u32
+        } else {
+            0_u32
+        },
+        if enable_interrupt_on_wake {
+            1_u32
+        } else {
+            0_u32
+        },
     ))
     .unwrap()
 }
@@ -542,6 +550,6 @@ pub fn self_has_enabled_int() -> bool {
 /// Returns
 ///     None
 pub fn set_int_state(interrupt_state: bool) {
-    let int_state_u32 = if interrupt_state {1_u32} else {0_u32};
+    let int_state_u32 = if interrupt_state { 1_u32 } else { 0_u32 };
     pip_core_mpu::pip_set_int_state(int_state_u32);
 }
