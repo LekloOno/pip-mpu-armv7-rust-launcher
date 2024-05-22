@@ -16,6 +16,9 @@ use crate::pip_mpu::core::pip_items::YieldCode;
 ///     A Result such as in case of :
 ///         - Success   : Empty Ok()
 ///         - Error     : Empty Err()
+/// ____
+/// Note: This function refers to createPartition from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L54-125
 pub fn create_partition(block_local_id: &*const u32) -> Result<(), ()> {
     if (pip_core_mpu::pip_create_partition(block_local_id) & 1) == 1 {
         Ok(())
@@ -41,6 +44,9 @@ pub fn create_partition(block_local_id: &*const u32) -> Result<(), ()> {
 ///     A Result such as in case of :
 ///         - Success   : Ok() containing the newly created subblock's local id
 ///         - Error     : Empty Err()
+/// ____
+/// Note: This function refers to cutMemoryBlock from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L127-233
 pub fn cut_memory_block(
     block_to_cut_local_id: &*const u32,
     cut_addr: &*const u32,
@@ -72,6 +78,9 @@ pub fn cut_memory_block(
 ///     A Result such as in case of :
 ///         - Success   : Ok() containing the newly created merged block's local id
 ///         - Error     : Empty Err()
+/// ____
+/// Note: This function refers to mergeMemoryBlocks from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L236-320
 pub fn merge_memory_blocks(
     block_to_merge_1_local_id: &*const u32,
     block_to_merge_2_local_id: &*const u32,
@@ -117,7 +126,10 @@ pub fn merge_memory_blocks(
 ///     -   Ok(bool) - contains true if the requisitionned block was used, false otherwise
 ///     -   Err() - ..... Many cases to determine
 /// ____
-/// Note : Note satisfied with the 'None' slots nb. Maybe an enum ? Looking for better ideas
+/// Note:   Note satisfied with the 'None' slots nb. Maybe an enum ? Looking for better ideas
+/// 
+///         This function refers to prepare from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L322-468
 pub fn prepare(
     part_desc_block_id: &*const u32,
     projected_slots_nb: Option<i32>,
@@ -150,6 +162,9 @@ pub fn prepare(
 ///     A Result such as in case of :
 ///         - Success : Ok() containing the local id of the block in the child. (newly "mapped" id)
 ///         - Error   : empty Err()
+/// ____
+/// Note: This function refers to addMemoryBlock from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L470-555
 pub fn add_memory_block(
     child_part_desc_block_local_id: &*const u32,
     block_to_share_local_id: &*const u32,
@@ -191,6 +206,9 @@ pub fn add_memory_block(
 ///     A Result such as in case of :
 ///         - Success   : Empty Ok()
 ///         - Error     : Empty Err()
+/// ____
+/// Note: This function refers to removeMemoryBlock from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L573-610
 pub fn remove_memory_block(block_to_remove_local_id: &*const u32) -> Result<(), ()> {
     if pip_core_mpu::pip_remove_memory_block(block_to_remove_local_id) & 1 == 1 {
         Ok(())
@@ -215,6 +233,9 @@ pub fn remove_memory_block(block_to_remove_local_id: &*const u32) -> Result<(), 
 ///         - Error     : Empty Err()
 ///             Null adress
 ///             Not a child partition
+/// ____
+/// Note: This function refers to deletePartition from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L612-663
 pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(), ()> {
     if pip_core_mpu::pip_delete_partition(child_part_desc_block_local_id) & 1 == 1 {
         Ok(())
