@@ -237,6 +237,9 @@ pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(
 ///     A Result such as in case of :
 ///         - Success : Ok() containing the local id of collected structure block
 ///         - Error   : empty Err()
+/// ____
+/// Note: This function refers to collect from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L665-703
 pub fn collect(part_desc_block_id: &*const u32) -> Result<*const u32, ()> {
     let collected_block_local_id = pip_core_mpu::pip_collect(part_desc_block_id);
 
@@ -268,6 +271,9 @@ pub fn collect(part_desc_block_id: &*const u32) -> Result<*const u32, ()> {
 ///             - `block_to_map_local_id` is not accessible             - block removed from the given region nb
 ///             - `part_desc_block_id` not current nor child partition  - nothing
 ///             - `mpu_region_nb` is not a valid region number          - nothing
+/// ____
+/// Note: This function refers to mapMPU from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L706-759
 pub fn map_mpu(
     part_desc_block_id: &*const u32,
     block_to_map_local_id: &*const u32,
@@ -297,6 +303,9 @@ pub fn map_mpu(
 ///         - Success : Ok() containing the local id of the block to read
 ///         - Error   : empty Err()
 ///             - No block found or error
+/// ____
+/// Note: This function refers to readMPU from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L762-794
 pub fn read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> Result<*const u32, ()> {
     let block_read_local_id = pip_core_mpu::pip_read_mpu(part_desc_block_id, mpu_region_nb);
 
@@ -325,6 +334,9 @@ pub fn read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> Result<*
 ///             `part_desc_block_id` is not a child nor current partition
 ///             `addr_in_block` not in partition of `part_desc_block_id`
 ///             `target_block_addr` not in partition of `part_desc_block_id`
+/// ____
+/// Note: This function refers to findBlock from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L796-840
 pub fn find_block(
     part_desc_block_id: &*const u32,
     addr_in_block: &*const u32,
@@ -361,6 +373,9 @@ pub fn find_block(
 ///             VIDT block overlaps
 ///             VIDT block is shared
 ///             VIDT block is shared in child
+/// ____
+/// Note: This function refers to setVIDT from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L842-914
 pub fn set_vidt(
     part_desc_block_id: &*const u32,
     vidt_block_local_id: &*const u32,
@@ -425,6 +440,9 @@ pub fn set_vidt(
 ///             23  : The address of the CALLEE's context, added to the size of a context, exceeds the end of the block.
 ///             24  : The address at which the CALLEE's context should be read is not aligned on a 4-byte boundary.
 ///         Return value should be ignored when the context is restored.
+/// ____
+/// Note: This function refers to yield from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/yield_c.c?ref_type=heads
 pub fn r#yield(
     callee_part_desc_block_id: &*const u32,
     user_target_interrupt: u32,
@@ -459,7 +477,7 @@ pub fn r#yield(
 /// Returns
 ///     True if the interruption are masked for this partition, false otherwise.
 /// ____
-/// Note: This function referes to getIntState from pip-core-mpu
+/// Note: This function refers to getIntState from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/pip_interrupt_calls.c?ref_type=heads#L40-54
 pub fn child_has_hidden_int(child_part_desc_block_local_id: *const u32) -> bool {
     pip_core_mpu::pip_get_int_state(child_part_desc_block_local_id) & 1 == 1
@@ -480,7 +498,7 @@ pub fn child_has_hidden_int(child_part_desc_block_local_id: *const u32) -> bool 
 /// Returns
 ///     True if the interruption are masked for this partition, false otherwise.
 /// ____
-/// Note: This function referes to getIntState from pip-core-mpu
+/// Note: This function refers to getIntState from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/pip_interrupt_calls.c?ref_type=heads#L56-64
 pub fn self_has_hidden_int() -> bool {
     pip_core_mpu::pip_get_self_int_state() & 1 == 1
