@@ -496,11 +496,11 @@ pub fn r#yield(
 /// *   child_part_desc_block_local_id   - The local id of the block containing the descriptor structure of the given child partition
 ///
 /// Returns
-///     True if the interruption are masked for this partition, false otherwise.
+///     True if the interruptions are enabled for this partition, false otherwise.
 /// ____
 /// Note: This function refers to getIntState from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/pip_interrupt_calls.c?ref_type=heads#L40-54
-pub fn child_has_hidden_int(child_part_desc_block_local_id: *const u32) -> bool {
+pub fn child_has_enabled_int(child_part_desc_block_local_id: *const u32) -> bool {
     pip_core_mpu::pip_get_int_state(child_part_desc_block_local_id) & 1 == 1
 }
 
@@ -517,11 +517,11 @@ pub fn child_has_hidden_int(child_part_desc_block_local_id: *const u32) -> bool 
 ///     be done accordingly.
 ///
 /// Returns
-///     True if the interruption are masked for this partition, false otherwise.
+///     True if the interruptions are enabled for this partition, false otherwise.
 /// ____
 /// Note: This function refers to getIntState from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/pip_interrupt_calls.c?ref_type=heads#L56-64
-pub fn self_has_hidden_int() -> bool {
+pub fn self_has_enabled_int() -> bool {
     pip_core_mpu::pip_get_self_int_state() & 1 == 1
 }
 
@@ -537,7 +537,7 @@ pub fn self_has_hidden_int() -> bool {
 ///     To manage child interrupt states, the root partition can check them with this system call, and do whatever should
 ///     be done accordingly.
 ///
-/// *   interrupt_state - True to mask the interruption, false otherwise
+/// *   interrupt_state - True to enable the interruptions, false otherwise
 ///
 /// Returns
 ///     None
