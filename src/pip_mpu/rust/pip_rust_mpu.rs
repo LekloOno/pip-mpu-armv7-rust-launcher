@@ -549,6 +549,9 @@ pub fn self_has_enabled_int() -> bool {
 ///
 /// Returns
 ///     None
+/// ____
+/// Note: This function refers to setIntState from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/pip_interrupt_calls.c?ref_type=heads#L77-103
 pub fn set_int_state(interrupt_state: bool) {
     let int_state_u32 = if interrupt_state { 1_u32 } else { 0_u32 };
     pip_core_mpu::pip_set_int_state(int_state_u32);
