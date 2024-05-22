@@ -524,3 +524,24 @@ pub fn child_has_hidden_int(child_part_desc_block_local_id: *const u32) -> bool 
 pub fn self_has_hidden_int() -> bool {
     pip_core_mpu::pip_get_self_int_state() & 1 == 1
 }
+
+/// Brief.
+///     Sets the current partition interrupt state.
+///
+/// Description.
+///     The [setIntState] system call sets the current partition interrupt state to `interrupt_state`.
+///     Root partition can truly hide the interrupts, where as child partition vitually hides them, the root partition
+///     should manage these interrupt states.
+///
+///     Reminder : Interrupts in pip-mpu flow down from pip, through root partition, down to the child partitions.
+///     To manage child interrupt states, the root partition can check them with this system call, and do whatever should
+///     be done accordingly.
+///
+/// *   interrupt_state - True to mask the interruption, false otherwise
+///
+/// Returns
+///     None
+pub fn set_int_state(interrupt_state: bool) {
+    let int_state_u32 = if interrupt_state {1_u32} else {0_u32};
+    pip_core_mpu::pip_set_int_state(int_state_u32);
+}
