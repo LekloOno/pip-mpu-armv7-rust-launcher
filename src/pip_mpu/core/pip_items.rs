@@ -1,4 +1,6 @@
 //use core::slice;
+use enum_from_derive::FromU32;
+
 const BASIC_FRAME_SIZE: usize = 17;
 const EXTENDED_FRAME_SIZE: usize = 50;
 
@@ -333,6 +335,7 @@ pub struct Interface {
     ram_end: *const u8,
 }
 
+#[derive(FromU32)]
 pub enum YieldCode {
     /*
      * \brief The system call succeeds without error.

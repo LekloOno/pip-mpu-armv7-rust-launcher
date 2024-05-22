@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 
 mini-format = {git = "https://gitlab.univ-lille.fr/2xs/mini-format.git"}
+enum_from_derive = {git = "https://github.com/LekloOno/ProcMacro_PrimitiveToEnum"}
 
 [profile.dev]
 panic = "abort"

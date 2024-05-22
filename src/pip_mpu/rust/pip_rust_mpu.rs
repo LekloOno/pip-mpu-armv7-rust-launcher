@@ -440,4 +440,5 @@ pub fn r#yield(
         flags_on_yield,
         flags_on_wake,
     ))
+    .unwrap()
 }
