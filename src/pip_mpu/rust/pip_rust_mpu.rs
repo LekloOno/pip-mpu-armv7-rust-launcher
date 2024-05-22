@@ -425,7 +425,6 @@ pub fn set_vidt(
 ///             23  : The address of the CALLEE's context, added to the size of a context, exceeds the end of the block.
 ///             24  : The address at which the CALLEE's context should be read is not aligned on a 4-byte boundary.
 ///         Return value should be ignored when the context is restored.
-
 pub fn r#yield(
     callee_part_desc_block_id: &*const u32,
     user_target_interrupt: u32,
@@ -441,4 +440,27 @@ pub fn r#yield(
         flags_on_wake,
     ))
     .unwrap()
+}
+
+/// Brief.
+///     Gets the given partition interrupt state.
+/// 
+/// Description.
+///     The [getIntState] system call gets the child partition of `child_part_desc_block_local_id` interrupt state.
+///     Root partition can truly hide the interrupts, where as child partition vitually hides them, the root partition
+///     should manage these interrupt states.
+///
+///     Reminder : Interrupts in pip-mpu flow down from pip, through root partition, down to the child partitions.
+///     To manage child interrupt states, the root partition can check them with this system call, and do whatever should
+///     be done accordingly.
+///
+/// *   child_part_desc_block_local_id   - The local id of the block containing the descriptor structure of the given child partition
+/// 
+/// Returns
+///     True if the interruption are masked for this partition, false otherwise.
+/// ____
+/// Note: This function referes to getIntState from pip-core-mpu
+/// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/pip_interrupt_calls.c?ref_type=heads#L40-54
+pub fn has_hidden_int(child_part_desc_block_local_id: *const u32) -> bool {
+    pip_core_mpu::pip_get_int_state(child_part_desc_block_local_id) & 1 == 1
 }
