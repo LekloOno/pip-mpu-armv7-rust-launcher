@@ -3,6 +3,13 @@ use enum_from_derive::FromU32;
 
 const BASIC_FRAME_SIZE: usize = 17;
 const EXTENDED_FRAME_SIZE: usize = 50;
+const VIDT_INTERRUPT_NUMBER: usize = 54;
+
+#[repr(C)]
+pub struct VIDT {
+    current_interrupt: u32,
+    contexts: *const [u8; VIDT_INTERRUPT_NUMBER],
+}
 
 #[repr(C)]
 pub struct BlockAttr {
