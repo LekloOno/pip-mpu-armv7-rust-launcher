@@ -72,7 +72,7 @@ pub fn cut_memory_block(
 ///
 /// *   `block_to_merge_1_local_id` - The local id of the first block to merge
 /// *   `block_to_merge_2_local_id` - The local id of the second block to merge
-/// *   `mpu_region_nb`             - The mpu regio number
+/// *   `mpu_region_nb`             - The mpu region number
 ///
 /// Returns
 ///     A Result such as in case of :
@@ -114,7 +114,7 @@ pub fn merge_memory_blocks(
 ///					free slots
 ///
 /// *   `part_desc_block_id`            - The block to prepare within the current or child partition
-/// *   `projected_slots_nb`            - The number of requested slots, do not specify to force prepare
+/// *   `projected_slots_nb`            - The number of requested slots, 'None' to force prepare
 /// *   `requisitionned_block_local_id` - The block used as the new kernel structure
 ///
 /// Returns
@@ -245,7 +245,7 @@ pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(
 }
 
 /// Brief.
-///     Collects and empty structure from the given partition, child or current.
+///     Collects and empties structure from the given partition, child or current.
 ///
 /// Description.
 ///     The [collect] system call collects an empty structure (if possible) from
@@ -494,7 +494,7 @@ pub fn r#yield(
 ///
 /// Description.
 ///     The [getIntState] system call gets the child partition of `child_part_desc_block_local_id` interrupt state.
-///     Root partition can truly hide the interrupts, where as child partition vitually hides them, the root partition
+///     Root partition can truly hide the interrupts, where as child partition virtually hides them, the root partition
 ///     should manage these interrupt states.
 ///
 ///     Reminder : Interrupts in pip-mpu flow down from pip, through root partition, down to the child partitions.
@@ -517,7 +517,7 @@ pub fn child_has_enabled_int(child_part_desc_block_local_id: *const u32) -> bool
 ///
 /// Description.
 ///     The [getSelfIntState] system call gets the current partition interrupt state.
-///     Root partition can truly hide the interrupts, where as child partition vitually hides them, the root partition
+///     Root partition can truly hide the interrupts, where as child partition virtually hides them, the root partition
 ///     should manage these interrupt states.
 ///
 ///     Reminder : Interrupts in pip-mpu flow down from pip, through root partition, down to the child partitions.
@@ -538,7 +538,7 @@ pub fn self_has_enabled_int() -> bool {
 ///
 /// Description.
 ///     The [setIntState] system call sets the current partition interrupt state to `interrupt_state`.
-///     Root partition can truly hide the interrupts, where as child partition vitually hides them, the root partition
+///     Root partition can truly hide the interrupts, where as child partition virtually hides them, the root partition
 ///     should manage these interrupt states.
 ///
 ///     Reminder : Interrupts in pip-mpu flow down from pip, through root partition, down to the child partitions.
