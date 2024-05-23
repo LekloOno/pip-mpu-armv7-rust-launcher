@@ -420,7 +420,7 @@ pub fn set_vidt(
 /// *   user_target_interrupt           -   The index of the VIDT which contains the address pointing to the location where the current
 ///                                         context is to be RESTORED
 /// *   user_caller_context_save_index  -   The index of the VIDT which contains the address pointing to the location where the current
-///                                         is to be STORED
+///                                         context is to be STORED
 ///                                         0 means the context is not stored
 /// *   enable_interrupts_on_yield       -   Wether or not the caller's interrupts should be enabled on yield
 /// *   enable_interrupts_on_wake        -   -----------------------------------------------------------wake
