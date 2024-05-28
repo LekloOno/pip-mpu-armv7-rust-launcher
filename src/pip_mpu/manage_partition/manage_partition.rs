@@ -83,7 +83,7 @@ pub fn m_create_partition(
     }
 
 
-    let root_block_id_1: *const u32 = rust::find_block(&root_itf.part_desc_block_id, )
+    //let root_block_id_1: *const u32 = rust::find_block(&root_itf.part_desc_block_id, )
     let root_kernel_id = rust::cut_memory_block()
 
     Err(())
