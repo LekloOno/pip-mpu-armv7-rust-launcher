@@ -50,7 +50,7 @@ pub struct BlockOrError {
     }
 */
 // Frame trait allows for Generic Frame, replacing StackedFrame
-trait Frame {
+pub trait Frame {
     fn sp(&self) -> u32;
     fn r4(&self) -> u32;
     fn r5(&self) -> u32;
@@ -68,6 +68,24 @@ trait Frame {
     fn lr(&self) -> u32;
     fn pc(&self) -> u32;
     fn xpsr(&self) -> u32;
+
+    fn set_sp(&mut self, val: u32);
+    fn set_r4(&mut self, val: u32);
+    fn set_r5(&mut self, val: u32);
+    fn set_r6(&mut self, val: u32);
+    fn set_r7(&mut self, val: u32);
+    fn set_r8(&mut self, val: u32);
+    fn set_r9(&mut self, val: u32);
+    fn set_r10(&mut self, val: u32);
+    fn set_r11(&mut self, val: u32);
+    fn set_r0(&mut self, val: u32);
+    fn set_r1(&mut self, val: u32);
+    fn set_r2(&mut self, val: u32);
+    fn set_r3(&mut self, val: u32);
+    fn set_r12(&mut self, val: u32);
+    fn set_lr(&mut self, val: u32);
+    fn set_pc(&mut self, val: u32);
+    fn set_xpsr(&mut self, val: u32);
 }
 
 pub struct BasicFrame {
@@ -126,6 +144,58 @@ impl Frame for BasicFrame {
     fn xpsr(&self) -> u32 {
         self.registers[16]
     }
+
+    fn set_sp(&mut self, val: u32) {
+        self.registers[0] = val;
+    }
+    fn set_r4(&mut self, val: u32) {
+        self.registers[1] = val;
+    }
+    fn set_r5(&mut self, val: u32) {
+        self.registers[2] = val;
+    }
+    fn set_r6(&mut self, val: u32) {
+        self.registers[3] = val;
+    }
+    fn set_r7(&mut self, val: u32) {
+        self.registers[4] = val;
+    }
+    fn set_r8(&mut self, val: u32) {
+        self.registers[5] = val;
+    }
+    fn set_r9(&mut self, val: u32) {
+        self.registers[6] = val;
+    }
+    fn set_r10(&mut self, val: u32) {
+        self.registers[7] = val;
+    }
+    fn set_r11(&mut self, val: u32) {
+        self.registers[8] = val;
+    }
+    fn set_r0(&mut self, val: u32) {
+        self.registers[9] = val;
+    }
+    fn set_r1(&mut self, val: u32) {
+        self.registers[10] = val;
+    }
+    fn set_r2(&mut self, val: u32) {
+        self.registers[11] = val;
+    }
+    fn set_r3(&mut self, val: u32) {
+        self.registers[12] = val;
+    }
+    fn set_r12(&mut self, val: u32) {
+        self.registers[13] = val;
+    }
+    fn set_lr(&mut self, val: u32) {
+        self.registers[14] = val;
+    }
+    fn set_pc(&mut self, val: u32) {
+        self.registers[15] = val;
+    }
+    fn set_xpsr(&mut self, val: u32) {
+        self.registers[16] = val;
+    }
 }
 
 pub struct ExtendedFrame {
@@ -183,6 +253,58 @@ impl Frame for ExtendedFrame {
     }
     fn xpsr(&self) -> u32 {
         self.registers[32]
+    }
+
+    fn set_sp(&mut self, val: u32) {
+        self.registers[16] = val;
+    }
+    fn set_r4(&mut self, val: u32) {
+        self.registers[17] = val;
+    }
+    fn set_r5(&mut self, val: u32) {
+        self.registers[18] = val;
+    }
+    fn set_r6(&mut self, val: u32) {
+        self.registers[19] = val;
+    }
+    fn set_r7(&mut self, val: u32) {
+        self.registers[20] = val;
+    }
+    fn set_r8(&mut self, val: u32) {
+        self.registers[21] = val;
+    }
+    fn set_r9(&mut self, val: u32) {
+        self.registers[22] = val;
+    }
+    fn set_r10(&mut self, val: u32) {
+        self.registers[23] = val;
+    }
+    fn set_r11(&mut self, val: u32) {
+        self.registers[24] = val;
+    }
+    fn set_r0(&mut self, val: u32) {
+        self.registers[25] = val;
+    }
+    fn set_r1(&mut self, val: u32) {
+        self.registers[26] = val;
+    }
+    fn set_r2(&mut self, val: u32) {
+        self.registers[27] = val;
+    }
+    fn set_r3(&mut self, val: u32) {
+        self.registers[28] = val;
+    }
+    fn set_r12(&mut self, val: u32) {
+        self.registers[29] = val;
+    }
+    fn set_lr(&mut self, val: u32) {
+        self.registers[30] = val;
+    }
+    fn set_pc(&mut self, val: u32) {
+        self.registers[31] = val;
+    }
+    fn set_xpsr(&mut self, val: u32) {
+        self.registers[32] = val;
     }
 }
 
@@ -289,9 +411,9 @@ impl ExtendedFrame {
 }
 
 pub struct BasicContext {
-    is_basic_frame: u32,
-    pip_flags: u32,
-    frame: BasicFrame,
+    pub is_basic_frame: u32,
+    pub pip_flags: u32,
+    pub frame: BasicFrame,
 }
 
 pub struct ExtendedContext {

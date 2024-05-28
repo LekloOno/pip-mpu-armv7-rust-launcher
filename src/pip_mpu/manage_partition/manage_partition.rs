@@ -1,4 +1,4 @@
-use crate::pip_mpu::core::pip_items::{BasicContext, Interface, VIDT};
+use crate::pip_mpu::core::pip_items::{BasicContext, Frame, Interface, VIDT};
 use crate::pip_mpu::manage_partition::partition_items::CreateReturn;
 use crate::pip_mpu::tools;
 use core::mem;
@@ -64,6 +64,9 @@ pub fn m_create_partition(
     tools::memset(vidt_addr as *mut u8, 0, mem::size_of::<VIDT>());
     unsafe {
         (*(vidt_addr as *mut VIDT)).contexts[0] = ctx_addr;
+        (*(ctx_addr as *mut BasicContext))
+            .frame
+            .set_r0(itf_addr as u32);
     }
 
     Err(())
