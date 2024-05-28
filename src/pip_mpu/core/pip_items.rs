@@ -13,7 +13,7 @@ pub struct VIDT {
 
 #[repr(C)]
 pub struct BlockAttr {
-    entry_addr: *const u32,
+    local_id: *const u32,
     start_addr: *const u32,
     end_addr: *const u32,
     read: u32,

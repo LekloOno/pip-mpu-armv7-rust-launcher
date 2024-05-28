@@ -1,6 +1,7 @@
-use crate::pip_mpu::core::pip_items::{BasicContext, Frame, Interface, VIDT};
+use crate::pip_mpu::core::pip_items::{BasicContext, Frame, Interface, VIDT, BlockOrError};
 use crate::pip_mpu::manage_partition::partition_items::CreateReturn;
 use crate::pip_mpu::tools;
+use crate::pip_mpu::rust;
 use core::mem;
 
 pub fn m_create_partition(
@@ -25,10 +26,6 @@ pub fn m_create_partition(
     let vidt_addr = stack_addr.wrapping_add(stack_size);
 
     // MPU BLOCK 1
-    tools::memset(root_itf.vidt_start as *mut u8, 0, mem::size_of::<VIDT>());
-    unsafe {
-        (*(root_itf.vidt_start as *mut VIDT)).contexts[0] = root_ctx as *const u8;
-    }
     let ctx_itf_block_size =
         tools::next_pow_of_2((mem::size_of::<VIDT>() + mem::size_of::<Interface>()) as u32)
             as usize;
@@ -47,6 +44,14 @@ pub fn m_create_partition(
     let unused_rom_addr = text_addr.wrapping_add(used_rom);
     let rom_end = unused_rom_addr.wrapping_add(unused_rom);
 
+    tools::memset(root_itf.vidt_start as *mut u8, 0, mem::size_of::<VIDT>());
+    unsafe {
+        (*(root_itf.vidt_start as *mut VIDT)).contexts[0] = root_ctx as *const u8;
+    }
+    tools::memset(vidt_addr as *mut u8, 0, mem::size_of::<VIDT>());
+    unsafe {
+        (*(vidt_addr as *mut VIDT)).contexts[0] = ctx_addr;
+    }
     //INIT CHILD INTERFACE
     unsafe {
         (*itf_addr).stack_top = vidt_addr.wrapping_sub(4);
@@ -61,13 +66,25 @@ pub fn m_create_partition(
     }
 
     //INIT CHILD CONTEXT
-    tools::memset(vidt_addr as *mut u8, 0, mem::size_of::<VIDT>());
     unsafe {
-        (*(vidt_addr as *mut VIDT)).contexts[0] = ctx_addr;
         (*(ctx_addr as *mut BasicContext))
             .frame
             .set_r0(itf_addr as u32);
+        (*(ctx_addr as *mut BasicContext))
+            .frame
+            .set_pc((root_itf.unused_rom_start as u32) | 1);
+        (*(ctx_addr as *mut BasicContext))
+            .frame
+            .set_sp(vidt_addr as u32 - 4);
+        (*(ctx_addr as *mut BasicContext))
+            .frame
+            .set_xpsr(0x01000000);
+            (*(ctx_addr as *mut BasicContext)).is_basic_frame = 1;
     }
+
+
+    let root_block_id_1: *const u32 = rust::find_block(&root_itf.part_desc_block_id, )
+    let root_kernel_id = rust::cut_memory_block()
 
     Err(())
 }

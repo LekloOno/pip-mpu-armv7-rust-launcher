@@ -1,6 +1,7 @@
 use crate::pip_mpu::core::pip_core_mpu;
 use crate::pip_mpu::core::pip_items::BlockOrError;
 use crate::pip_mpu::core::pip_items::YieldCode;
+use crate::pip_mpu::core::pip_items::BlockAttr;
 
 /// Brief.
 ///     Creates a new child
@@ -346,11 +347,10 @@ pub fn read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> Result<*
 ///
 /// *   part_desc_block_id  - The global or local id of the descriptor block of the current or child partition
 /// *   addr_in_block       - The address stemming from the block to find
-/// *   target_block_addr   - The address where to write the found block's attributes
 ///
 /// Returns
 ///     A Result such as in case of :
-///         - Success   : Empty Ok()
+///         - Success   : Ok() containing the found block's attributes
 ///         - Error     : Empty Err()
 ///             `part_desc_block_id` is not a child nor current partition
 ///             `addr_in_block` not in partition of `part_desc_block_id`
@@ -361,10 +361,14 @@ pub fn read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> Result<*
 pub fn find_block(
     part_desc_block_id: &*const u32,
     addr_in_block: &*const u32,
-    block_addr: &*const BlockOrError,
-) -> Result<(), ()> {
-    if pip_core_mpu::pip_find_block(part_desc_block_id, addr_in_block, block_addr) & 1 == 1 {
-        Ok(())
+) -> Result<BlockAttr, ()> {
+    let target_block_addr: *const BlockOrError;
+    if pip_core_mpu::pip_find_block(part_desc_block_id, addr_in_block, &target_block_addr) & 1 == 1 {
+        if target_block_addr.error == 1 {
+            Err(())
+        } else {
+            Ok(target_block_addr.block_attr)
+        }
     } else {
         Err(())
     }
