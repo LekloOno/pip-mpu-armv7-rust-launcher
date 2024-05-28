@@ -312,34 +312,34 @@ pub struct StackedContect {
 */
 pub struct Interface {
     /// The ID of the block containing the partition descriptor of the root partition
-    part_desc_block_id: *const u8,
+    pub part_desc_block_id: *const u8,
 
     /// The limit address of the stack of the root partition
-    stack_limit: *const u8,
+    pub stack_limit: *const u8,
 
     /// The stack top address of the root partition
-    stack_top: *const u8,
+    pub stack_top: *const u8,
 
     /// The VIDT start address of the root partition
-    vidt_start: *const u8,
+    pub vidt_start: *const u8,
 
     /// The VIDT end address of the root partition
-    vidt_end: *const u8,
+    pub vidt_end: *const u8,
 
     /// The start address of the root partition binary
-    root: *const u8,
+    pub root: *const u8,
 
     /// The start address of the unused ROM
-    unused_rom_start: *const u8,
+    pub unused_rom_start: *const u8,
 
     /// The end address of the unused ROM
-    rom_end: *const u8,
+    pub rom_end: *const u8,
 
     /// The start address of the unused RAM
-    unused_ram_start: *mut u8,
+    pub unused_ram_start: *mut u8,
 
     /// The end address of the unused RAM
-    ram_end: *const u8,
+    pub ram_end: *const u8,
 }
 
 #[derive(FromU32)]

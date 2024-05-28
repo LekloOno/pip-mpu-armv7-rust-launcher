@@ -15,13 +15,14 @@ pub fn m_create_partition(
     let pd_addr = tools::round((interface.ram_end as u32) - 1023, 512); //1023 is 512 - 511, to make sure we do have 512 bits after align
     let kern_addr = pd_addr - 512;
     let stack_addr = tools::round(
-        interface.unused_ram_start,
-        tools::next_pow_of_2(stack_size + vidt_size),
+        interface.unused_ram_start as u32,
+        tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap()),
     );
-    let vidt_addr = stack_addr + stack_size; /*
-                                             tools::memset(interface.vidt_start)
-                                             unsafe {
-
-                                             }*/
+    let vidt_addr = stack_addr + stack_size as u32;
+    /*
+    tools::memset(interface.vidt_start)
+    unsafe {
+    }
+    */
     Err(())
 }
