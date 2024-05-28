@@ -327,7 +327,7 @@ pub struct Interface {
     pub vidt_end: *const u8,
 
     /// The start address of the root partition binary
-    pub root: *const u8,
+    pub entry_point: *const u8,
 
     /// The start address of the unused ROM
     pub unused_rom_start: *const u8,
