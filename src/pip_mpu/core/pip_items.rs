@@ -7,8 +7,8 @@ const VIDT_INTERRUPT_NUMBER: usize = 54;
 
 #[repr(C)]
 pub struct VIDT {
-    current_interrupt: u32,
-    contexts: *const [u8; VIDT_INTERRUPT_NUMBER],
+    pub current_interrupt: u32,
+    pub contexts: [*const u8; VIDT_INTERRUPT_NUMBER],
 }
 
 #[repr(C)]
