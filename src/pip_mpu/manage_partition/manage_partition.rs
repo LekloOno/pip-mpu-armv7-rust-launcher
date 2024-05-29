@@ -17,6 +17,7 @@ pub fn m_create_partition(
     let success_output = CreateReturn::new();
     let pd_addr = tools::round((root_itf.ram_end as u32) - 1023, 512) as *const u8; //1023 is 512 + 511, to make sure we do have 512 bits after align
     let kern_addr = pd_addr.wrapping_sub(512);
+    let root_kern_addr = kern_addr.wrapping_sub(512);
 
     // MPU BLOCK 0
     let stack_vidt_block_size = tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap());
@@ -83,8 +84,8 @@ pub fn m_create_partition(
     }
 
 
-    //let root_block_id_1: *const u32 = rust::find_block(&root_itf.part_desc_block_id, )/
-    let root_kernel_id = rust::cut_memory_block()
+    let root_block_id_1: *const u32 = rust::find_block(&root_itf.part_desc_block_id, root_kern_addr).unwrap();
+    let root_kernel_id = rust::cut_memory_block(root_block_id_1, root_kern_addr, )
 
     Err(())
 }
