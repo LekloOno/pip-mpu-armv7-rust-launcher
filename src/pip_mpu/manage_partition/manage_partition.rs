@@ -55,12 +55,12 @@ pub fn m_create_partition(
     let itf_addr = ctx_addr.wrapping_add(mem::size_of::<BasicContext>()) as *mut Interface;
 
     let unused_ram_addr = ctx_addr.wrapping_add(ctx_itf_block_size);
-    let ram_end = unused_ram_addr.wrapping_add(unused_ram);
+    let ram_end_addr = unused_ram_addr.wrapping_add(unused_ram);
 
     // MPU BLOCK 2
     let text_addr = entry_point;
     let unused_rom_addr = text_addr.wrapping_add(used_rom);
-    let rom_end = unused_rom_addr.wrapping_add(unused_rom);
+    let rom_end_addr = unused_rom_addr.wrapping_add(unused_rom);
 
     tools::memset(parent_itf.vidt_start as *mut u8, 0, mem::size_of::<VIDT>());
     unsafe {
@@ -78,9 +78,9 @@ pub fn m_create_partition(
         (*itf_addr).vidt_end = vidt_addr.wrapping_add(512);
         (*itf_addr).entry_point = text_addr;
         (*itf_addr).unused_rom_start = unused_rom_addr;
-        (*itf_addr).rom_end = rom_end;
+        (*itf_addr).rom_end = rom_end_addr;
         (*itf_addr).unused_ram_start = unused_ram_addr as *mut u8;
-        (*itf_addr).ram_end = ram_end;
+        (*itf_addr).ram_end = ram_end_addr;
     }
 
     //INIT CHILD CONTEXT
@@ -102,7 +102,7 @@ pub fn m_create_partition(
 
     // CREATE THE PARTITIONS
 
-    // Pip block
+    // Pip blocks
     let parent_kern_block_id = pip_rust_mpu::cut_memory_block(
         &actual_pip_block_local_id,
         &(parent_kern_addr as *const u32),
@@ -122,9 +122,20 @@ pub fn m_create_partition(
 
     let kern_block_id = pip_rust_mpu::cut_memory_block(&pd_block_id, &(kern_addr as *const u32), None).unwrap();
 
-    // Child block
-    let stack_vidt_block_id = pip_rust_mpu::cut_memory_block(&child_ram_block, &(stack_addr as *const u32), None).unwrap();
-    let ctx_itf_block_id = pip_rust_mpu::cut_memory_block(&)
+    // Child blocks
+    let stack_vidt_block_id = if stack_addr == child_ram_block.address {
+        child_ram_block.local_id
+    } else {
+        pip_rust_mpu::cut_memory_block(&child_ram_block, &(stack_addr as *const u32), None).unwrap()
+    }
 
+    let ctx_itf_block_id = pip_rust_mpu::cut_memory_block(&stack_vidt_block_id, &(ctx_addr as *const u32), None).unwrap();
+    let unused_ram_block_id = pip_rust_mpu::cut_memory_block(&ctx_itf_block_id, &(unused_ram_addr as *const u32), None).unwrap();
+    let ram_end_block_id = pip_rust_mpu::cut_memory_block(&unused_ram_block_id, &(ram_end_addr as *const u32), None).unwrap();
+    
+    // TO DO, find the rom block and cut
+    //let rom_block_id = pip_rust_mpu::cut_memory_block(&)
+
+    // TO DO, add different blocks left overs blocks
     Err(())
 }
