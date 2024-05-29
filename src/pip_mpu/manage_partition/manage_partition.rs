@@ -6,8 +6,9 @@ use core::mem;
 
 pub fn m_create_partition(
     root_itf: Interface,
-    child_block: Block,
-    pip_block: Option<Block>, //If none is specified, pip datas will be placed at the end of child_block
+    child_ram_block: Block,
+    child_rom_block: Block,
+    pip_block: Option<Block>, //If none is specified, pip datas will be placed at the end of child_ram_block
     root_ctx: *const BasicContext,
     stack_size: usize,
     vidt_size: usize,
@@ -18,13 +19,13 @@ pub fn m_create_partition(
 ) -> Result<CreateReturn, ()> {
     let success_output = CreateReturn::new();
 
-    let actual_pip_block = match pip_block {
-        None => child_block,
-        Some(block) => block,
+    let (actual_pip_block_addr, actual_pip_block_size) = match pip_block {
+        None => (child_ram_block.address, child_ram_block.size),
+        Some(block) => (block.address, block.size),
     };
 
     let pd_addr = tools::round(
-        (actual_pip_block.address.wrapping_add(actual_pip_block.size) as u32) - 1023,
+        (actual_pip_block_addr.wrapping_add(actual_pip_block_size) as u32) - 1023,
         512,
     ) as *const u8;
     let kern_addr = pd_addr.wrapping_sub(512);
@@ -38,7 +39,7 @@ pub fn m_create_partition(
     let stack_vidt_block_size = tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap());
 
     let stack_addr =
-        tools::round(root_itf.unused_ram_start as u32, stack_vidt_block_size) as *const u8; // Set the stack address to the next aligned block with a minimum size of stack_size + vidt_size
+        tools::round(child_ram_block.address as u32, stack_vidt_block_size) as *const u8; // Set the stack address to the next aligned block with a minimum size of stack_size + vidt_size
     let vidt_addr = stack_addr.wrapping_add(stack_size);
 
     // MPU BLOCK 1
@@ -56,7 +57,7 @@ pub fn m_create_partition(
     let ram_end = unused_ram_addr.wrapping_add(unused_ram);
 
     // MPU BLOCK 2
-    let text_addr = root_itf.unused_rom_start;
+    let text_addr = child_rom_block.address as *const u8;
     let unused_rom_addr = text_addr.wrapping_add(used_rom);
     let rom_end = unused_rom_addr.wrapping_add(unused_rom);
 
@@ -88,7 +89,7 @@ pub fn m_create_partition(
             .set_r0(itf_addr as u32);
         (*(ctx_addr as *mut BasicContext))
             .frame
-            .set_pc((root_itf.unused_rom_start as u32) | 1);
+            .set_pc((child_rom_block.address as u32) | 1);
         (*(ctx_addr as *mut BasicContext))
             .frame
             .set_sp(vidt_addr as u32 - 4);
