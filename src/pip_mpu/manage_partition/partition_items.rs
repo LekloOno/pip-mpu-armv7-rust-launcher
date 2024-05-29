@@ -48,3 +48,9 @@ impl CreateReturn {
         }
     }
 }
+
+pub struct Block {
+    pub local_id: *const u32;   //Local id of the block
+    pub address: *const u32;    //Start Address of the block
+    pub size: *const u32;       //Size of the block
+}
