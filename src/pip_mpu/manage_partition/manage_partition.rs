@@ -101,12 +101,6 @@ pub fn m_create_partition(
         (*(ctx_addr as *mut BasicContext)).is_basic_frame = 1;
     }
 
-    let root_block_id_1: *const u32 = pip_rust_mpu::find_block(
-        &(root_itf.part_desc_block_id as *const u32),
-        &(root_kern_addr as *const u32),
-    )
-    .unwrap()
-    .local_id;
     let root_kernel_id = pip_rust_mpu::cut_memory_block(
         &actual_pip_block_local_id,
         &(root_kern_addr as *const u32),
