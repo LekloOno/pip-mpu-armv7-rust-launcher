@@ -5,11 +5,11 @@ use crate::pip_mpu::tools;
 use core::mem;
 
 pub fn m_create_partition(
-    root_itf: Interface,
+    parent_itf: Interface,
     child_ram_block: Block,
     child_rom_block: Block,
     pip_block: Option<Block>, //If none is specified, pip datas will be placed at the end of child_ram_block
-    root_ctx: *const BasicContext,
+    parent_ctx: *const BasicContext,
     stack_size: usize,
     vidt_size: usize,
     entry_point: *const u32,
@@ -36,7 +36,7 @@ pub fn m_create_partition(
     ) as *const u8;
 
     let kern_addr = pd_addr.wrapping_sub(512);
-    let root_kern_addr = kern_addr.wrapping_sub(512);
+    let parent_kern_addr = kern_addr.wrapping_sub(512);
     // MPU BLOCK 0
     let stack_vidt_block_size = tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap());
 
@@ -63,9 +63,9 @@ pub fn m_create_partition(
     let unused_rom_addr = text_addr.wrapping_add(used_rom);
     let rom_end = unused_rom_addr.wrapping_add(unused_rom);
 
-    tools::memset(root_itf.vidt_start as *mut u8, 0, mem::size_of::<VIDT>());
+    tools::memset(parent_itf.vidt_start as *mut u8, 0, mem::size_of::<VIDT>());
     unsafe {
-        (*(root_itf.vidt_start as *mut VIDT)).contexts[0] = root_ctx as *const u8;
+        (*(parent_itf.vidt_start as *mut VIDT)).contexts[0] = parent_ctx as *const u8;
     }
     tools::memset(vidt_addr as *mut u8, 0, mem::size_of::<VIDT>());
     unsafe {
@@ -101,9 +101,9 @@ pub fn m_create_partition(
         (*(ctx_addr as *mut BasicContext)).is_basic_frame = 1;
     }
 
-    let root_kernel_id = pip_rust_mpu::cut_memory_block(
+    let parent_kernel_id = pip_rust_mpu::cut_memory_block(
         &actual_pip_block_local_id,
-        &(root_kern_addr as *const u32),
+        &(parent_kern_addr as *const u32),
         None,
     )
     .unwrap();
