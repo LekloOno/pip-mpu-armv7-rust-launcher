@@ -108,5 +108,15 @@ pub fn m_create_partition(
     )
     .unwrap();
 
+    let pd_id =
+        pip_rust_mpu::cut_memory_block(&parent_kernel_id, &(pd_addr as *const u32), None).unwrap();
+
+    pip_rust_mpu::prepare(
+        &(parent_itf.part_desc_block_id as *const u32),
+        None,
+        &parent_kernel_id,
+    )
+    .unwrap();
+    
     Err(())
 }
