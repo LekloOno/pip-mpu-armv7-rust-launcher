@@ -5,17 +5,16 @@ use crate::pip_mpu::tools;
 use core::mem;
 
 pub fn m_create_partition(
-    parent_itf: Interface,
-    child_ram_block: Block,
-    child_rom_block: Block,
-    pip_block: Option<Block>, //If none is specified, pip datas will be placed at the end of child_ram_block
-    parent_ctx: *const BasicContext,
-    stack_size: usize,
-    vidt_size: usize,
-    entry_point: *const u32,
-    used_rom: usize,
-    unused_ram: usize, // 0 if leaf partition
-    unused_rom: usize, // 0 if leaf partition
+    parent_itf: Interface,              //Structure describing the initial parent memory layout.
+    child_ram_block: Block,             //The parent's RAM block to use as child's RAM space.
+    pip_block: Option<Block>,           //The parent's RAM block to use for pip's intern structure for the child. If none is specified, pip datas will be placed at the end of child_ram_block
+    entry_point: *const u8,            //The entry point in ROM of the child.
+    used_rom: usize,                    //The size of the child's used ROM.
+    parent_ctx: *const BasicContext,    //The address of the space where the parent's context lies
+    stack_size: usize,                  //The desired size of the child's stack
+    vidt_size: usize,                   //The vidt size, depends on the architecrure. On dwm1001, 512.
+    unused_ram: usize,                  //The unused RAM space in the child to create, notably used to create sub child partitions. 0 if leaf partition
+    unused_rom: usize,                  //The unused ROM space in the child to create, notably used to create sub child partitions. 0 if leaf partition
 ) -> Result<CreateReturn, ()> {
     let success_output = CreateReturn::new();
 
@@ -59,7 +58,7 @@ pub fn m_create_partition(
     let ram_end = unused_ram_addr.wrapping_add(unused_ram);
 
     // MPU BLOCK 2
-    let text_addr = child_rom_block.address as *const u8;
+    let text_addr = entry_point;
     let unused_rom_addr = text_addr.wrapping_add(used_rom);
     let rom_end = unused_rom_addr.wrapping_add(unused_rom);
 
@@ -91,7 +90,7 @@ pub fn m_create_partition(
             .set_r0(itf_addr as u32);
         (*(ctx_addr as *mut BasicContext))
             .frame
-            .set_pc((child_rom_block.address as u32) | 1);
+            .set_pc((entry_point as u32) | 1);
         (*(ctx_addr as *mut BasicContext))
             .frame
             .set_sp(vidt_addr as u32 - 4);
@@ -117,6 +116,9 @@ pub fn m_create_partition(
         &parent_kernel_id,
     )
     .unwrap();
-    
+
+    // CREATE THE PARTITIONS
+
+
     Err(())
 }
