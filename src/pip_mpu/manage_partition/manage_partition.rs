@@ -100,25 +100,31 @@ pub fn m_create_partition(
         (*(ctx_addr as *mut BasicContext)).is_basic_frame = 1;
     }
 
-    let parent_kernel_id = pip_rust_mpu::cut_memory_block(
+    // CREATE THE PARTITIONS
+
+    // Pip block
+    let parent_kern_block_id = pip_rust_mpu::cut_memory_block(
         &actual_pip_block_local_id,
         &(parent_kern_addr as *const u32),
         None,
     )
     .unwrap();
 
-    let pd_id =
-        pip_rust_mpu::cut_memory_block(&parent_kernel_id, &(pd_addr as *const u32), None).unwrap();
+    let pd_block_id =
+        pip_rust_mpu::cut_memory_block(&parent_kern_block_id, &(pd_addr as *const u32), None).unwrap();
 
     pip_rust_mpu::prepare(
         &(parent_itf.part_desc_block_id as *const u32),
         None,
-        &parent_kernel_id,
+        &parent_kern_block_id,
     )
     .unwrap();
 
-    // CREATE THE PARTITIONS
+    let kern_block_id = pip_rust_mpu::cut_memory_block(&pd_block_id, &(kern_addr as *const u32), None).unwrap();
 
+    // Child block
+    let stack_vidt_block_id = pip_rust_mpu::cut_memory_block(&child_ram_block, &(stack_addr as *const u32), None).unwrap();
+    let ctx_itf_block_id = pip_rust_mpu::cut_memory_block(&)
 
     Err(())
 }
