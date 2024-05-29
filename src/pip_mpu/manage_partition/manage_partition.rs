@@ -19,22 +19,24 @@ pub fn m_create_partition(
 ) -> Result<CreateReturn, ()> {
     let success_output = CreateReturn::new();
 
-    let (actual_pip_block_addr, actual_pip_block_size) = match pip_block {
-        None => (child_ram_block.address, child_ram_block.size),
-        Some(block) => (block.address, block.size),
+    let (actual_pip_block_addr, actual_pip_block_size, actual_pip_block_local_id) = match pip_block
+    {
+        None => (
+            child_ram_block.address,
+            child_ram_block.size,
+            child_ram_block.local_id,
+        ),
+        Some(block) => (block.address, block.size, block.local_id),
     };
 
+    //Base pip datas address depending on wether or not a block has already been cut to contain them.
     let pd_addr = tools::round(
         (actual_pip_block_addr.wrapping_add(actual_pip_block_size) as u32) - 1023,
         512,
     ) as *const u8;
+
     let kern_addr = pd_addr.wrapping_sub(512);
     let root_kern_addr = kern_addr.wrapping_sub(512);
-    /*
-    let pd_addr = tools::round((root_itf.ram_end as u32) - 1023, 512) as *const u8; //1023 is 512 + 511, to make sure we do have 512 bits after align
-    let kern_addr = pd_addr.wrapping_sub(512);
-    let root_kern_addr = kern_addr.wrapping_sub(512);
-    */
     // MPU BLOCK 0
     let stack_vidt_block_size = tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap());
 
@@ -105,7 +107,12 @@ pub fn m_create_partition(
     )
     .unwrap()
     .local_id;
-    //let root_kernel_id = rust::cut_memory_block(root_block_id_1, root_kern_addr, )
+    let root_kernel_id = pip_rust_mpu::cut_memory_block(
+        &actual_pip_block_local_id,
+        &(root_kern_addr as *const u32),
+        None,
+    )
+    .unwrap();
 
     Err(())
 }

@@ -51,10 +51,13 @@ pub fn create_partition(block_local_id: &*const u32) -> Result<(), ()> {
 pub fn cut_memory_block(
     block_to_cut_local_id: &*const u32,
     cut_addr: &*const u32,
-    mpu_region_nb: i32,
+    mpu_region_nb: Option<i32>,
 ) -> Result<*const u32, ()> {
-    let subblock_local_id =
-        pip_core_mpu::pip_cut_memory_block(block_to_cut_local_id, cut_addr, mpu_region_nb);
+    let subblock_local_id = pip_core_mpu::pip_cut_memory_block(
+        block_to_cut_local_id,
+        cut_addr,
+        mpu_region_nb.unwrap_or_else(|| -1),
+    );
     subblock_local_id
         .is_null()
         .then(|| subblock_local_id)
