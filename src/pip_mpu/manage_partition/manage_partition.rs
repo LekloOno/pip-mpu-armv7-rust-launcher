@@ -1,11 +1,13 @@
-use crate::pip_mpu::core::pip_items::{BasicContext, Frame, Interface, VIDT, BlockOrError};
-use crate::pip_mpu::manage_partition::partition_items::CreateReturn;
+use crate::pip_mpu::core::pip_items::{BasicContext, BlockOrError, Frame, Interface, VIDT};
+use crate::pip_mpu::manage_partition::partition_items::{Block, CreateReturn};
+use crate::pip_mpu::rust::pip_rust_mpu;
 use crate::pip_mpu::tools;
-use crate::pip_mpu::rust;
 use core::mem;
 
 pub fn m_create_partition(
     root_itf: Interface,
+    child_block: Block,
+    pip_block: Option<Block>, //If none is specified, pip datas will be placed at the end of child_block
     root_ctx: *const BasicContext,
     stack_size: usize,
     vidt_size: usize,
@@ -15,10 +17,23 @@ pub fn m_create_partition(
     unused_rom: usize, // 0 if leaf partition
 ) -> Result<CreateReturn, ()> {
     let success_output = CreateReturn::new();
+
+    let actual_pip_block = match pip_block {
+        None => child_block,
+        Some(block) => block,
+    };
+
+    let pd_addr = tools::round(
+        (actual_pip_block.address.wrapping_add(actual_pip_block.size) as u32) - 1023,
+        512,
+    ) as *const u8;
+    let kern_addr = pd_addr.wrapping_sub(512);
+    let root_kern_addr = kern_addr.wrapping_sub(512);
+    /*
     let pd_addr = tools::round((root_itf.ram_end as u32) - 1023, 512) as *const u8; //1023 is 512 + 511, to make sure we do have 512 bits after align
     let kern_addr = pd_addr.wrapping_sub(512);
     let root_kern_addr = kern_addr.wrapping_sub(512);
-
+    */
     // MPU BLOCK 0
     let stack_vidt_block_size = tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap());
 
@@ -80,12 +95,16 @@ pub fn m_create_partition(
         (*(ctx_addr as *mut BasicContext))
             .frame
             .set_xpsr(0x01000000);
-            (*(ctx_addr as *mut BasicContext)).is_basic_frame = 1;
+        (*(ctx_addr as *mut BasicContext)).is_basic_frame = 1;
     }
 
-
-    let root_block_id_1: *const u32 = rust::find_block(&root_itf.part_desc_block_id, root_kern_addr).unwrap();
-    let root_kernel_id = rust::cut_memory_block(root_block_id_1, root_kern_addr, )
+    let root_block_id_1: *const u32 = pip_rust_mpu::find_block(
+        &(root_itf.part_desc_block_id as *const u32),
+        &(root_kern_addr as *const u32),
+    )
+    .unwrap()
+    .local_id;
+    //let root_kernel_id = rust::cut_memory_block(root_block_id_1, root_kern_addr, )
 
     Err(())
 }

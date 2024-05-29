@@ -13,19 +13,42 @@ pub struct VIDT {
 
 #[repr(C)]
 pub struct BlockAttr {
-    local_id: *const u32,
-    start_addr: *const u32,
-    end_addr: *const u32,
-    read: u32,
-    write: u32,
-    exec: u32,
-    accessible: u32,
+    pub local_id: *const u32,
+    pub start_addr: *const u32,
+    pub end_addr: *const u32,
+    pub read: u32,
+    pub write: u32,
+    pub exec: u32,
+    pub accessible: u32,
+}
+
+impl BlockAttr {
+    pub fn new() -> Self {
+        Self {
+            local_id: core::ptr::null(),
+            start_addr: core::ptr::null(),
+            end_addr: core::ptr::null(),
+            read: 0,
+            write: 0,
+            exec: 0,
+            accessible: 0,
+        }
+    }
 }
 
 #[repr(C)]
 pub struct BlockOrError {
-    error: i32,
-    block_attr: BlockAttr,
+    pub error: i32,
+    pub block_attr: BlockAttr,
+}
+
+impl BlockOrError {
+    pub fn new() -> Self {
+        Self {
+            error: 0,
+            block_attr: BlockAttr::new(),
+        }
+    }
 }
 /*
     #[repr(C)]

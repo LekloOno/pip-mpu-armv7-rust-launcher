@@ -1,7 +1,7 @@
 use crate::pip_mpu::core::pip_core_mpu;
+use crate::pip_mpu::core::pip_items::BlockAttr;
 use crate::pip_mpu::core::pip_items::BlockOrError;
 use crate::pip_mpu::core::pip_items::YieldCode;
-use crate::pip_mpu::core::pip_items::BlockAttr;
 
 /// Brief.
 ///     Creates a new child
@@ -362,12 +362,20 @@ pub fn find_block(
     part_desc_block_id: &*const u32,
     addr_in_block: &*const u32,
 ) -> Result<BlockAttr, ()> {
-    let target_block_addr: *const BlockOrError;
-    if pip_core_mpu::pip_find_block(part_desc_block_id, addr_in_block, &target_block_addr) & 1 == 1 {
-        if target_block_addr.error == 1 {
-            Err(())
-        } else {
-            Ok(target_block_addr.block_attr)
+    let target_block_addr = BlockOrError::new();
+    if pip_core_mpu::pip_find_block(
+        part_desc_block_id,
+        addr_in_block,
+        &(&target_block_addr as *const _),
+    ) & 1
+        == 1
+    {
+        unsafe {
+            if target_block_addr.error == 1 {
+                Err(())
+            } else {
+                Ok(target_block_addr.block_attr)
+            }
         }
     } else {
         Err(())
