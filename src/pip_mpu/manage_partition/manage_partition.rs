@@ -121,12 +121,20 @@ pub fn m_create_partition(
         pip_rust_mpu::cut_memory_block(&pd_block_id, &(kern_addr as *const u32), None).unwrap();
 
     // Child blocks
-    let stack_vidt_block_id = if stack_addr == child_ram_block.address as *const u8 {
-        child_ram_block.local_id
-    } else {
-        pip_rust_mpu::cut_memory_block(&child_ram_block.local_id, &(stack_addr as *const u32), None)
-            .unwrap()
-    };
+    let (stack_vidt_block_id, ram_head_block_id) =
+        if stack_addr == child_ram_block.address as *const u8 {
+            (child_ram_block.local_id, None)
+        } else {
+            (
+                pip_rust_mpu::cut_memory_block(
+                    &child_ram_block.local_id,
+                    &(stack_addr as *const u32),
+                    None,
+                )
+                .unwrap(),
+                Some(child_ram_block.local_id),
+            )
+        };
 
     let ctx_itf_block_id =
         pip_rust_mpu::cut_memory_block(&stack_vidt_block_id, &(ctx_addr as *const u32), None)
@@ -150,16 +158,20 @@ pub fn m_create_partition(
         &(entry_point as *const u32),
     )
     .unwrap();
-    let rom_block_id = if parent_rom_block_attr.start_addr == entry_point as *const u32 {
-        parent_rom_block_attr.local_id
-    } else {
-        pip_rust_mpu::cut_memory_block(
-            &parent_rom_block_attr.local_id,
-            &(entry_point as *const u32),
-            None,
-        )
-        .unwrap()
-    };
+    let (rom_block_id, rom_head_block_id) =
+        if parent_rom_block_attr.start_addr == entry_point as *const u32 {
+            (parent_rom_block_attr.local_id, None)
+        } else {
+            (
+                pip_rust_mpu::cut_memory_block(
+                    &parent_rom_block_attr.local_id,
+                    &(entry_point as *const u32),
+                    None,
+                )
+                .unwrap(),
+                Some(parent_rom_block_attr.local_id),
+            )
+        };
 
     let unused_rom_id_option = if unused_rom_addr < parent_rom_block_attr.end_addr as *const u8 {
         Some(
