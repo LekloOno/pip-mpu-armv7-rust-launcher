@@ -134,7 +134,20 @@ pub fn m_create_partition(
     let ram_end_block_id = pip_rust_mpu::cut_memory_block(&unused_ram_block_id, &(ram_end_addr as *const u32), None).unwrap();
     
     // TO DO, find the rom block and cut
-    //let rom_block_id = pip_rust_mpu::cut_memory_block(&)
+    let parent_rom_block_attr = pip_rust_mpu::find_block(&parent_itf.part_desc_block_id, &entry_point).unwrap();
+    let rom_block_id = if parent_rom_block_attr.address == entry_point {
+        parent_rom_block_attr.local_id
+    } else {
+        pip_rust_mpu::cut_memory_block(&parent_rom_block_attr.local_id, &entry_point, None).unwrap();
+    };
+
+    let unused_rom_id_option = if unused_rom_addr < parent_rom_block_attr.end_addr {
+        Some(pip_rust_mpu::cut_memory_block(&rom_block_id, &unused_ram_addr, None).unwrap())
+    } else {
+        None
+    };
+
+    let 
 
     // TO DO, add different blocks left overs blocks
     Err(())
