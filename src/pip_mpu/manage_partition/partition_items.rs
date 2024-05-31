@@ -6,17 +6,24 @@ pub struct Partition {
     pub vidt_addr: *const u32,            //Address of this partition's vidt
     pub interface_addr: *const Interface, //Address of this partition's interface
     pub stack_vidt_block_id: *const u32,  //Local Id of the block containing the stack & vidt
-    pub ctx_itf_block_id: *const u32,     //Local id of the block containing the interface
-    pub rom_block_id: *const u32,         //Local id of the block containing the used ROM
+    pub ctx_itf_block_id: *const u32,     //Local Id of the block containing the interface
+    pub rom_block_id: *const u32,         //Local Id of the block containing the used ROM
 
     //Branch partition attributes
-    pub unused_ram_block_id: *const u32, //Local id of the block containing the unused RAM, NULL if this partition is a leaf partition
-    pub unused_rom_block_id: *const u32, //Local id of the block containing the unused ROM, NULL if this partition is a leaf partition
+    pub unused_ram_block_id: *const u32, //Local Id of the block containing the unused RAM, NULL if this partition is a leaf partition
+    pub unused_rom_block_id: *const u32, //Local Id of the block containing the unused ROM, NULL if this partition is a leaf partition
 
     //Merge data - used when deleting a partition to merge it back to its parent
     //In this partition's life time, these datas are unaccessible as they belong to pip.
-    pub pd_block_id: *const u32, //Local id of the block containing the partition descriptor
-    pub kern_block_id: *const u32, //Local id of the block containing the kernel structure
+    pub pd_block_id: *const u32, //Local Id of the block containing the partition descriptor
+    pub kern_block_id: *const u32, //Local Id of the block containing the kernel structure
+}
+
+pub struct Parent {
+    pub child_in_parent: Partition, //The local ids within the parent of the block cut for the child.
+    pub ram_left_over_block_id: Option<*const u32>, //The remaining part of the provided block after cutting the aligned stack/vidt. None if the provided block was already aligned.
+    pub rom_left_over_block_id: Option<*const u32>, //The remaining part of the provided block after cutting the flash block. None if the provided entry address was the start address of its block.
+    pub new_kern_block_id: Option<*const u32>, //A new kernel structure, if it was required to create the requested partition (For now, a new kernel structure will always be created)
 }
 
 impl Partition {
@@ -38,7 +45,7 @@ impl Partition {
 
 pub struct CreateReturn {
     pub partition: Partition, //The created partition datas.
-    pub parent_new_kern_block_id: Option<*const u32>, //A new kernel structure, if it was required to create the requested partition (For now, a new kernel structure will always be created)
+    pub parent_new_kern_block_id: Option<*const u32>,
     pub ram_end_block_id: Option<*const u32>, //If there is RAM left out of the partition creation, its block local id
     pub rom_end_block_id: Option<*const u32>, //If there is ROM left out of the partition creation, its block local id
 }

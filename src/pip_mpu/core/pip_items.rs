@@ -111,6 +111,7 @@ pub trait Frame {
     fn set_xpsr(&mut self, val: u32);
 }
 
+#[derive(Default)]
 pub struct BasicFrame {
     pub registers: [u32; BASIC_FRAME_SIZE],
 }
@@ -433,6 +434,8 @@ impl ExtendedFrame {
     }
 }
 
+#[repr(C)]
+#[derive(Default)]
 pub struct BasicContext {
     pub is_basic_frame: u32,
     pub pip_flags: u32,
@@ -455,6 +458,7 @@ pub struct StackedContect {
         }
     }
 */
+#[repr(C)]
 pub struct Interface {
     /// The ID of the block containing the partition descriptor of the root partition
     pub part_desc_block_id: *const u8,

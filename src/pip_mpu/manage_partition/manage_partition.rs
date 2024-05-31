@@ -5,14 +5,15 @@ use crate::pip_mpu::tools;
 use core::mem;
 
 pub fn m_create_partition(
-    parent_itf: Interface, //Structure describing the initial parent memory layout.
+    parent_itf: &Interface, //Structure describing the initial parent memory layout.
     parent_ctx: *const BasicContext, //The address of the space where the parent's context lies
-    child_ram_block: Block, //The parent's RAM block to use as child's RAM space.
-    pip_block: Option<Block>, //The parent's RAM block to use for pip's intern structure for the child. If none is specified, pip datas will be placed at the end of child_ram_block
-    entry_point: *const u8,   //The entry point in ROM of the child.
-    stack_size: usize,        //The desired size of the child's stack
-    vidt_size: usize,         //The vidt size, depends on the architecrure. On dwm1001, 512.
-    rom_size: usize,          //The size of the child's used ROM.
+    child_ram_block: &Block, //The parent's RAM block to use as child's RAM space.
+    pip_block: Option<&Block>, //The parent's RAM block to use for pip's intern structure for the child. If none is specified, pip datas will be placed at the end of child_ram_block
+    entry_point: *const u8,    //The entry point in ROM of the child.
+    stack_size: usize,         //The desired size of the child's stack
+    vidt_size: usize,          //The vidt size, depends on the architecrure. On dwm1001, 512.
+    used_rom_size: usize,      //The size of the child's used ROM.
+    unused_rom_size: usize,    //The size of the child's unused ROM.
 ) -> Result<CreateReturn, ()> {
     let success_output = CreateReturn::new();
 
@@ -55,7 +56,8 @@ pub fn m_create_partition(
     let unused_ram_addr = ctx_addr.wrapping_add(ctx_itf_block_size);
 
     // MPU BLOCK 2
-    let unused_rom_addr = entry_point.wrapping_add(rom_size);
+    let unused_rom_addr = entry_point.wrapping_add(used_rom_size);
+    let rom_end_addr = unused_rom_addr.wrapping_add(unused_rom_size);
 
     tools::memset(parent_itf.vidt_start as *mut u8, 0, mem::size_of::<VIDT>());
     unsafe {
@@ -74,7 +76,7 @@ pub fn m_create_partition(
         (*itf_addr).vidt_end = vidt_addr.wrapping_add(512);
         (*itf_addr).entry_point = entry_point;
         (*itf_addr).unused_rom_start = unused_rom_addr;
-        (*itf_addr).rom_end = entry_point.wrapping_add(rom_size);
+        (*itf_addr).rom_end = rom_end_addr;
         (*itf_addr).unused_ram_start = unused_ram_addr as *mut u8;
         (*itf_addr).ram_end = ram_end_addr;
     }
