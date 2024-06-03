@@ -52,24 +52,23 @@ pub fn m_create_partition(
 
     // CHILD
 
-    // Stack and vidt
+    // Stack and vidt - Always a physical block
     let stack_vidt_block_size =
         tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap()) as usize;
 
     let stack_addr = child_ram_block.address.bits_align(stack_vidt_block_size); // Set the stack address to the next aligned block with a minimum size of stack_size + vidt_size
     let vidt_addr = stack_addr.add_bits_offset(stack_size);
 
-    // Context and interface
-    let ctx_itf_block_size =
-        tools::next_pow_of_2((mem::size_of::<VIDT>() + mem::size_of::<Interface>()) as u32)
-            as usize;
+    // Context and interface - Might be a virtual block
+    let ctx_itf_block_size = mem::size_of::<VIDT>() + mem::size_of::<Interface>();
 
     let ctx_addr = stack_addr
         .add_bits_offset(stack_vidt_block_size)
-        .bits_align(ctx_itf_block_size);
+        .bits_align(32);
     let itf_addr = ctx_addr.add_bits_offset(mem::size_of::<BasicContext>()) as *mut Interface;
 
-    let unused_ram_addr = ctx_addr.add_bits_offset(ctx_itf_block_size);
+    // Unused ram, general purpose within child - Might be a virtual block
+    let unused_ram_addr = ctx_addr.add_bits_offset(ctx_itf_block_size).bits_align(32);
 
     // Rom
     let unused_rom_addr = entry_point.add_bits_offset(used_rom_size);
@@ -83,7 +82,7 @@ pub fn m_create_partition(
     unsafe {
         (*(vidt_addr as *mut VIDT)).contexts[0] = ctx_addr;
     }
-    
+
     //INIT CHILD INTERFACE
     let ram_end_addr = child_ram_block
         .address
