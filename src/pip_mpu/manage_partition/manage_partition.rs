@@ -18,6 +18,16 @@ pub fn m_create_partition(
 ) -> Result<CreateReturn, ()> {
     let success_output = CreateReturn::new();
 
+    // ________________________________
+    // 
+    // PREPARE AND INITIALISE ADDRESSES
+    // ________________________________
+
+    // PIP
+
+    //Find the real block used for pip datas.
+    //The pip blocks will be cut within the block given in parameters of m_create_partition.
+    //If this block is None, they will be cut within the general child ram block.
     let (actual_pip_block_addr, actual_pip_block_size, actual_pip_block_local_id) = match pip_block
     {
         None => (
@@ -28,21 +38,28 @@ pub fn m_create_partition(
         Some(block) => (block.address, block.size, block.local_id),
     };
 
-    //Base pip datas address depending on wether or not a block has already been cut to contain them.
+    //Child partition descriptor address
     let pd_addr = actual_pip_block_addr
         .add_bits_offset(actual_pip_block_size - 1023)
         .bits_align(512);
 
+    //Child first kernel structure address
     let kern_addr = pd_addr.sub_bits_offset(512);
+
+    //Parent new kernel structure address
     let parent_kern_addr = kern_addr.sub_bits_offset(512);
-    // MPU BLOCK 0
+    
+
+    // CHILD
+
+    // Stack and vidt
     let stack_vidt_block_size =
         tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap()) as usize;
 
     let stack_addr = child_ram_block.address.bits_align(stack_vidt_block_size); // Set the stack address to the next aligned block with a minimum size of stack_size + vidt_size
     let vidt_addr = stack_addr.add_bits_offset(stack_size);
 
-    // MPU BLOCK 1
+    // Context and interface
     let ctx_itf_block_size =
         tools::next_pow_of_2((mem::size_of::<VIDT>() + mem::size_of::<Interface>()) as u32)
             as usize;
@@ -54,7 +71,7 @@ pub fn m_create_partition(
 
     let unused_ram_addr = ctx_addr.add_bits_offset(ctx_itf_block_size);
 
-    // MPU BLOCK 2
+    // Rom
     let unused_rom_addr = entry_point.add_bits_offset(used_rom_size);
     let rom_end_addr = unused_rom_addr.add_bits_offset(unused_rom_size);
 
@@ -66,6 +83,7 @@ pub fn m_create_partition(
     unsafe {
         (*(vidt_addr as *mut VIDT)).contexts[0] = ctx_addr;
     }
+    
     //INIT CHILD INTERFACE
     let ram_end_addr = child_ram_block
         .address
