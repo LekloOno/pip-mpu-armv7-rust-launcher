@@ -19,7 +19,7 @@ pub fn m_create_partition(
     let success_output = CreateReturn::new();
 
     // ________________________________
-    // 
+    //
     // PREPARE AND INITIALISE ADDRESSES
     // ________________________________
 
@@ -48,7 +48,6 @@ pub fn m_create_partition(
 
     //Parent new kernel structure address
     let parent_kern_addr = kern_addr.sub_bits_offset(512);
-    
 
     // CHILD
 
@@ -237,6 +236,40 @@ pub fn m_create_partition(
         )
     } else {
         None
+    };
+
+    /// __________________________________
+    ///
+    /// CREATE PARTITION AND ASSIGN BLOCKS
+    /// __________________________________
+    pip_rust_mpu::create_partition(&pd_block_id).unwrap();
+    pip_rust_mpu::prepare(&pd_block_id, None, &kern_block_id).unwrap();
+
+    let child_stack_vidt_block_id =
+        pip_rust_mpu::add_memory_block(&pd_block_id, &stack_vidt_block_id, true, true, false)
+            .unwrap();
+    let child_ctx_itf_block_id =
+        pip_rust_mpu::add_memory_block(&pd_block_id, &ctx_itf_block_id, true, true, false).unwrap();
+    let child_unused_ram_block_id_option = match unused_ram_block_id_option {
+        Some(x) => {
+            Some(pip_rust_mpu::add_memory_block(&pd_block_id, &x, true, true, false).unwrap())
+        }
+        _ => None,
+    };
+
+    let child_rom_block_id =
+        pip_rust_mpu::add_memory_block(&pd_block_id, &rom_block_id, true, false, true).unwrap();
+    let child_unused_rom_block_id = match unused_rom_id_option {
+        Some(x) => {
+            Some(pip_rust_mpu::add_memory_block(&pd_block_id, &x, true, false, true).unwrap())
+        }
+        _ => None,
+    };
+    let child_rom_end_block_id = match rom_end_block_id {
+        Some(x) => {
+            Some(pip_rust_mpu::add_memory_block(&pd_block_id, &x, true, false, true).unwrap())
+        }
+        _ => None,
     };
 
     Err(())
