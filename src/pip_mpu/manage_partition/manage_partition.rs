@@ -3,6 +3,7 @@ use crate::pip_mpu::manage_partition::partition_items::{Block, CreateReturn};
 use crate::pip_mpu::rust::pip_rust_mpu;
 use crate::pip_mpu::tools;
 use core::mem;
+use ptr_bits_ops::{MutPtrBitsOps, PtrBitsOps};
 
 pub fn m_create_partition(
     parent_itf: &Interface, //Structure describing the initial parent memory layout.
@@ -28,36 +29,34 @@ pub fn m_create_partition(
     };
 
     //Base pip datas address depending on wether or not a block has already been cut to contain them.
-    let pd_addr = tools::round(
-        (actual_pip_block_addr.wrapping_add(actual_pip_block_size) as u32) - 1023,
-        512,
-    ) as *const u8;
+    let pd_addr = actual_pip_block_addr
+        .add_bits_offset(actual_pip_block_size - 1023)
+        .bits_align(512);
 
-    let kern_addr = pd_addr.wrapping_sub(512);
-    let parent_kern_addr = kern_addr.wrapping_sub(512);
+    let kern_addr = pd_addr.sub_bits_offset(512);
+    let parent_kern_addr = kern_addr.sub_bits_offset(512);
     // MPU BLOCK 0
-    let stack_vidt_block_size = tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap());
+    let stack_vidt_block_size =
+        tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap()) as usize;
 
-    let stack_addr =
-        tools::round(child_ram_block.address as u32, stack_vidt_block_size) as *const u8; // Set the stack address to the next aligned block with a minimum size of stack_size + vidt_size
-    let vidt_addr = stack_addr.wrapping_add(stack_size);
+    let stack_addr = child_ram_block.address.bits_align(stack_vidt_block_size); // Set the stack address to the next aligned block with a minimum size of stack_size + vidt_size
+    let vidt_addr = stack_addr.add_bits_offset(stack_size);
 
     // MPU BLOCK 1
     let ctx_itf_block_size =
         tools::next_pow_of_2((mem::size_of::<VIDT>() + mem::size_of::<Interface>()) as u32)
             as usize;
 
-    let ctx_addr = tools::round(
-        stack_addr as u32 + stack_vidt_block_size,
-        ctx_itf_block_size as u32,
-    ) as *const u8;
-    let itf_addr = ctx_addr.wrapping_add(mem::size_of::<BasicContext>()) as *mut Interface;
+    let ctx_addr = stack_addr
+        .add_bits_offset(stack_vidt_block_size)
+        .bits_align(ctx_itf_block_size);
+    let itf_addr = ctx_addr.add_bits_offset(mem::size_of::<BasicContext>()) as *mut Interface;
 
-    let unused_ram_addr = ctx_addr.wrapping_add(ctx_itf_block_size);
+    let unused_ram_addr = ctx_addr.add_bits_offset(ctx_itf_block_size);
 
     // MPU BLOCK 2
-    let unused_rom_addr = entry_point.wrapping_add(used_rom_size);
-    let rom_end_addr = unused_rom_addr.wrapping_add(unused_rom_size);
+    let unused_rom_addr = entry_point.add_bits_offset(used_rom_size);
+    let rom_end_addr = unused_rom_addr.add_bits_offset(unused_rom_size);
 
     tools::memset(parent_itf.vidt_start as *mut u8, 0, mem::size_of::<VIDT>());
     unsafe {
@@ -68,12 +67,14 @@ pub fn m_create_partition(
         (*(vidt_addr as *mut VIDT)).contexts[0] = ctx_addr;
     }
     //INIT CHILD INTERFACE
-    let ram_end_addr = child_ram_block.address.wrapping_add(child_ram_block.size) as *const u8;
+    let ram_end_addr = child_ram_block
+        .address
+        .add_bits_offset(child_ram_block.size) as *const u8;
     unsafe {
-        (*itf_addr).stack_top = vidt_addr.wrapping_sub(4);
+        (*itf_addr).stack_top = vidt_addr.add_bits_offset(4);
         (*itf_addr).stack_limit = stack_addr;
         (*itf_addr).vidt_start = vidt_addr;
-        (*itf_addr).vidt_end = vidt_addr.wrapping_add(512);
+        (*itf_addr).vidt_end = vidt_addr.add_bits_offset(512);
         (*itf_addr).entry_point = entry_point;
         (*itf_addr).unused_rom_start = unused_rom_addr;
         (*itf_addr).rom_end = rom_end_addr;

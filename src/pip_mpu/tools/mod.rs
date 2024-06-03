@@ -1,7 +1,3 @@
-pub fn round(x: u32, y: u32) -> u32 {
-    (x + y - 1) & !(y - 1)
-}
-
 pub fn next_pow_of_2(mut x: u32) -> u32 {
     x -= 1;
     x |= x >> 1;

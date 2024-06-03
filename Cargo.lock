@@ -18,12 +18,17 @@ source = "git+https://gitlab.univ-lille.fr/2xs/mini-format.git#78a23c2e4fc68f1a3
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.83"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b33eb56c327dec362a9e55b3ad14f9d2f0904fb5a5b03b513ab5465399e9f43"
+checksum = "22244ce15aa966053a896d1accb3a6e68469b97c7f33f284b99f0d576879fc23"
 dependencies = [
  "unicode-ident",
 ]
+
+[[package]]
+name = "ptr_bits_ops"
+version = "0.1.1"
+source = "git+https://github.com/LekloOno/pointer_bits_operators#632f57194636c1050df13df5464b7e1b9f6f3ab1"
 
 [[package]]
 name = "quote"
@@ -40,6 +45,7 @@ version = "0.1.0"
 dependencies = [
  "enum_from_derive",
  "mini-format",
+ "ptr_bits_ops",
 ]
 
 [[package]]
