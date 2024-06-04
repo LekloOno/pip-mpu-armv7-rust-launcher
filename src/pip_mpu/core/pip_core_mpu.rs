@@ -185,13 +185,13 @@ pub fn pip_find_block(
 }
 
 #[inline]
-pub fn pip_set_vidt(part_desc_block_id: *const u32, vidt_block_local_id: *const u32) -> u32 {
+pub fn pip_set_vidt(part_desc_block_id: *const u32, vidt_address: *const u32) -> u32 {
     let vidt_block_added: u32;
     unsafe {
         asm!(
             "svc #11",
             inout("r0") part_desc_block_id => vidt_block_added,
-            in("r1") vidt_block_local_id,
+            in("r1") vidt_address,
         );
     }
 
