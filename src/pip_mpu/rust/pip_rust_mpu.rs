@@ -401,7 +401,7 @@ pub fn find_block(part_desc_block_id: &BlockId, addr_in_block: *const u32) -> Re
 /// *   part_desc_block_id  -   The global or local id of the block containing
 ///                             the descriptor structure of the current or
 ///                             child partition
-/// *   vidt_block_local_id -   The address of the VIDT or NULL to reset the
+/// *   vidt_address        -   The address of the VIDT or NULL to reset the
 ///                             VIDT address to NULL in the partition descriptor
 ///
 /// Returns
@@ -418,13 +418,8 @@ pub fn find_block(part_desc_block_id: &BlockId, addr_in_block: *const u32) -> Re
 /// ____
 /// Note: This function refers to setVIDT from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L842-914
-pub fn set_vidt(part_desc_block_id: &BlockId, vidt_block_local_id: &BlockId) -> Result<(), ()> {
-    if pip_core_mpu::pip_set_vidt(
-        part_desc_block_id.id() as *const u32,
-        vidt_block_local_id.id() as *const u32,
-    ) & 1
-        == 1
-    {
+pub fn set_vidt(part_desc_block_id: &BlockId, vidt_address: *const u32) -> Result<(), ()> {
+    if pip_core_mpu::pip_set_vidt(part_desc_block_id.id() as *const u32, vidt_address) & 1 == 1 {
         Ok(())
     } else {
         Err(())
