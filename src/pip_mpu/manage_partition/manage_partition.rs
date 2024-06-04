@@ -1,5 +1,6 @@
 use crate::pip_mpu::core::pip_items::{BasicContext, BlockOrError, Frame, Interface, VIDT};
-use crate::pip_mpu::manage_partition::partition_items::{Block, CreateReturn, Parent, Partition};
+use crate::pip_mpu::manage_partition::partition_items::{CreateReturn, Parent, Partition};
+use crate::pip_mpu::rust::pip_rust_items::{Block, BlockId};
 use crate::pip_mpu::rust::pip_rust_mpu;
 use crate::pip_mpu::tools;
 use core::mem;
@@ -16,6 +17,7 @@ pub fn m_create_partition(
     used_rom_size: usize,      //The size of the child's used ROM.
     unused_rom_size: usize,    //The size of the child's unused ROM.
 ) -> Result<CreateReturn, ()> {
+    let parent_pd_block_id = BlockId::new(parent_itf.part_desc_block_id as usize);
     // ________________________________
     //
     // PREPARE AND INITIALIZE ADDRESSES
@@ -29,11 +31,11 @@ pub fn m_create_partition(
     let (actual_pip_block_addr, actual_pip_block_size, actual_pip_block_local_id) = match pip_block
     {
         None => (
-            child_ram_block.address,
-            child_ram_block.size,
+            child_ram_block.start_addr,
+            child_ram_block.size(),
             child_ram_block.local_id,
         ),
-        Some(block) => (block.address, block.size, block.local_id),
+        Some(block) => (block.start_addr, block.size(), block.local_id),
     };
 
     //Child partition descriptor address
@@ -53,7 +55,7 @@ pub fn m_create_partition(
     let stack_vidt_block_size =
         tools::next_pow_of_2((stack_size + vidt_size).try_into().unwrap()) as usize;
 
-    let stack_addr = child_ram_block.address.bits_align(stack_vidt_block_size); // Set the stack address to the next aligned block with a minimum size of stack_size + vidt_size
+    let stack_addr = child_ram_block.start_addr.bits_align(stack_vidt_block_size); // Set the stack address to the next aligned block with a minimum size of stack_size + vidt_size
     let vidt_addr = stack_addr.add_bits_offset(stack_size);
 
     // Context and interface - Might be a virtual block
@@ -82,8 +84,8 @@ pub fn m_create_partition(
 
     //INIT CHILD INTERFACE
     let ram_end_addr = child_ram_block
-        .address
-        .add_bits_offset(child_ram_block.size) as *const u8;
+        .start_addr
+        .add_bits_offset(child_ram_block.size()) as *const u8;
     unsafe {
         (*itf_addr).stack_top = vidt_addr.add_bits_offset(4);
         (*itf_addr).stack_limit = stack_addr;
@@ -123,27 +125,21 @@ pub fn m_create_partition(
     // parent new kernel structure
     let parent_kern_block_id = pip_rust_mpu::cut_memory_block(
         &actual_pip_block_local_id,
-        &(parent_kern_addr as *const u32),
+        parent_kern_addr as *const u32,
         None,
     )
     .unwrap();
 
     // prepare the parent's kernel structure
-    pip_rust_mpu::prepare(
-        &(parent_itf.part_desc_block_id as *const u32),
-        None,
-        &parent_kern_block_id,
-    )
-    .unwrap();
+    pip_rust_mpu::prepare(&parent_pd_block_id, None, &parent_kern_block_id).unwrap();
 
     // child's partition descriptor
     let pd_block_id =
-        pip_rust_mpu::cut_memory_block(&parent_kern_block_id, &(pd_addr as *const u32), None)
-            .unwrap();
+        pip_rust_mpu::cut_memory_block(&parent_kern_block_id, pd_addr as *const u32, None).unwrap();
 
     // child's first kernel structure
     let kern_block_id =
-        pip_rust_mpu::cut_memory_block(&pd_block_id, &(kern_addr as *const u32), None).unwrap();
+        pip_rust_mpu::cut_memory_block(&pd_block_id, kern_addr as *const u32, None).unwrap();
 
     // CHILD BLOCKS
 
@@ -154,13 +150,13 @@ pub fn m_create_partition(
     //  * `ram_head_block_id` is the local id of the left over head if the start_address of the given child's ram block isn't aligned on the vidt/stack block's size.
     //i.e. the block between the child's block start address and the first address aligned on vidt/stack size
     let (stack_vidt_block_id, ram_head_block_id) =
-        if stack_addr == child_ram_block.address as *const u8 {
+        if stack_addr == child_ram_block.start_addr as *const u8 {
             (child_ram_block.local_id, None)
         } else {
             (
                 pip_rust_mpu::cut_memory_block(
                     &child_ram_block.local_id,
-                    &(stack_addr as *const u32),
+                    stack_addr as *const u32,
                     None,
                 )
                 .unwrap(),
@@ -170,28 +166,20 @@ pub fn m_create_partition(
 
     //The local id of the block containing the context & interface of the partition.
     let ctx_itf_block_id =
-        pip_rust_mpu::cut_memory_block(&stack_vidt_block_id, &(ctx_addr as *const u32), None)
-            .unwrap();
+        pip_rust_mpu::cut_memory_block(&stack_vidt_block_id, ctx_addr as *const u32, None).unwrap();
     //The left over tail once the vidt/stack and context/interface blocks have been cut. General purpose within the child partition.
     let unused_ram_block_id_option = if unused_ram_addr < ram_end_addr {
         Some(
-            pip_rust_mpu::cut_memory_block(
-                &ctx_itf_block_id,
-                &(unused_ram_addr as *const u32),
-                None,
-            )
-            .unwrap(),
+            pip_rust_mpu::cut_memory_block(&ctx_itf_block_id, unused_ram_addr as *const u32, None)
+                .unwrap(),
         )
     } else {
         None
     };
 
     // Rom blocks
-    let parent_rom_block_attr = pip_rust_mpu::find_block(
-        &(parent_itf.part_desc_block_id as *const u32),
-        &(entry_point as *const u32),
-    )
-    .unwrap();
+    let parent_rom_block_attr =
+        pip_rust_mpu::find_block(&parent_pd_block_id, entry_point as *const u32).unwrap();
 
     //  * `rom_block_id` is the local id of one of parent's rom block if its start address is the entry point of the child,
     //The local id of the newly cut block whose start address is the entry point of the child otherwise.
@@ -204,7 +192,7 @@ pub fn m_create_partition(
             (
                 pip_rust_mpu::cut_memory_block(
                     &parent_rom_block_attr.local_id,
-                    &(entry_point as *const u32),
+                    entry_point as *const u32,
                     None,
                 )
                 .unwrap(),
@@ -213,23 +201,22 @@ pub fn m_create_partition(
         };
 
     //The left over tail, depending on the requested amount of rom. General purpose within the child partition.
-    let unused_rom_block_id_option = if unused_rom_addr
-        < parent_rom_block_attr.end_addr as *const u8
-    {
-        Some(
-            pip_rust_mpu::cut_memory_block(&rom_block_id, &(unused_ram_addr as *const u32), None)
-                .unwrap(),
-        )
-    } else {
-        None
-    };
+    let unused_rom_block_id_option =
+        if unused_rom_addr < parent_rom_block_attr.end_addr as *const u8 {
+            Some(
+                pip_rust_mpu::cut_memory_block(&rom_block_id, unused_ram_addr as *const u32, None)
+                    .unwrap(),
+            )
+        } else {
+            None
+        };
 
     //The left over tail, depending on the requested amount of rom. General purpose within the PARENT partition.
     let rom_end_block_id = if rom_end_addr < parent_rom_block_attr.end_addr as *const u8 {
         Some(
             pip_rust_mpu::cut_memory_block(
                 &(unused_rom_block_id_option.unwrap()),
-                &(rom_end_addr as *const u32),
+                rom_end_addr as *const u32,
                 None,
             )
             .unwrap(),

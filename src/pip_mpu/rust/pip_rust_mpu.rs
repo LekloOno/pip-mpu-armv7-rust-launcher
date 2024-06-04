@@ -2,6 +2,7 @@ use crate::pip_mpu::core::pip_core_mpu;
 use crate::pip_mpu::core::pip_items::BlockAttr;
 use crate::pip_mpu::core::pip_items::BlockOrError;
 use crate::pip_mpu::core::pip_items::YieldCode;
+use crate::pip_mpu::rust::pip_rust_items::{Block, BlockId};
 
 /// Brief.
 ///     Creates a new child
@@ -20,8 +21,8 @@ use crate::pip_mpu::core::pip_items::YieldCode;
 /// ____
 /// Note: This function refers to createPartition from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L54-125
-pub fn create_partition(block_local_id: &*const u32) -> Result<(), ()> {
-    if (pip_core_mpu::pip_create_partition(block_local_id) & 1) == 1 {
+pub fn create_partition(block_local_id: &BlockId) -> Result<(), ()> {
+    if (pip_core_mpu::pip_create_partition(block_local_id.id() as *const u32) & 1) == 1 {
         Ok(())
     } else {
         Err(())
@@ -49,18 +50,18 @@ pub fn create_partition(block_local_id: &*const u32) -> Result<(), ()> {
 /// Note: This function refers to cutMemoryBlock from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L127-233
 pub fn cut_memory_block(
-    block_to_cut_local_id: &*const u32,
-    cut_addr: &*const u32,
+    block_to_cut_local_id: &BlockId,
+    cut_addr: *const u32,
     mpu_region_nb: Option<i32>,
-) -> Result<*const u32, ()> {
+) -> Result<BlockId, ()> {
     let subblock_local_id = pip_core_mpu::pip_cut_memory_block(
-        block_to_cut_local_id,
+        block_to_cut_local_id.id() as *const u32,
         cut_addr,
         mpu_region_nb.unwrap_or_else(|| -1),
     );
     subblock_local_id
         .is_null()
-        .then(|| subblock_local_id)
+        .then(|| BlockId::new(subblock_local_id as usize))
         .ok_or(())
 }
 
@@ -86,18 +87,18 @@ pub fn cut_memory_block(
 /// Note: This function refers to mergeMemoryBlocks from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L236-320
 pub fn merge_memory_blocks(
-    block_to_merge_1_local_id: &*const u32,
-    block_to_merge_2_local_id: &*const u32,
+    block_to_merge_1_local_id: &BlockId,
+    block_to_merge_2_local_id: &BlockId,
     mpu_region_nb: i32,
-) -> Option<*const u32> {
+) -> Option<BlockId> {
     let merged_block_local_id = pip_core_mpu::pip_merge_memory_blocks(
-        block_to_merge_1_local_id,
-        block_to_merge_2_local_id,
+        block_to_merge_1_local_id.id() as *const u32,
+        block_to_merge_2_local_id.id() as *const u32,
         mpu_region_nb,
     );
     merged_block_local_id
         .is_null()
-        .then(|| merged_block_local_id)
+        .then(|| BlockId::new(merged_block_local_id as usize))
 }
 
 /// Brief.
@@ -135,14 +136,14 @@ pub fn merge_memory_blocks(
 ///         This function refers to prepare from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L322-468
 pub fn prepare(
-    part_desc_block_id: &*const u32,
+    part_desc_block_id: &BlockId,
     projected_slots_nb: Option<i32>,
-    requisitionned_block_local_id: &*const u32,
+    requisitionned_block_local_id: &BlockId,
 ) -> Result<(), ()> {
     let valid = pip_core_mpu::pip_prepare(
-        part_desc_block_id,
+        part_desc_block_id.id() as *const u32,
         projected_slots_nb.unwrap_or_else(|| -1),
-        requisitionned_block_local_id,
+        requisitionned_block_local_id.id() as *const u32,
     ) & 1
         == 1;
 
@@ -170,15 +171,15 @@ pub fn prepare(
 /// Note: This function refers to addMemoryBlock from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L470-555
 pub fn add_memory_block(
-    child_part_desc_block_local_id: &*const u32,
-    block_to_share_local_id: &*const u32,
+    child_part_desc_block_local_id: &BlockId,
+    block_to_share_local_id: &BlockId,
     r: bool,
     w: bool,
     x: bool,
-) -> Result<*const u32, ()> {
+) -> Result<BlockId, ()> {
     let added_block_local_id = pip_core_mpu::pip_add_memory_block(
-        child_part_desc_block_local_id,
-        block_to_share_local_id,
+        child_part_desc_block_local_id.id() as *const u32,
+        block_to_share_local_id.id() as *const u32,
         r as u32,
         w as u32,
         x as u32,
@@ -186,7 +187,7 @@ pub fn add_memory_block(
 
     added_block_local_id
         .is_null()
-        .then(|| added_block_local_id)
+        .then(|| BlockId::new(added_block_local_id as usize))
         .ok_or(())
 }
 
@@ -213,8 +214,8 @@ pub fn add_memory_block(
 /// ____
 /// Note: This function refers to removeMemoryBlock from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L573-610
-pub fn remove_memory_block(block_to_remove_local_id: &*const u32) -> Result<(), ()> {
-    if pip_core_mpu::pip_remove_memory_block(block_to_remove_local_id) & 1 == 1 {
+pub fn remove_memory_block(block_to_remove_local_id: &BlockId) -> Result<(), ()> {
+    if pip_core_mpu::pip_remove_memory_block(block_to_remove_local_id.id() as *const u32) & 1 == 1 {
         Ok(())
     } else {
         Err(())
@@ -240,8 +241,10 @@ pub fn remove_memory_block(block_to_remove_local_id: &*const u32) -> Result<(), 
 /// ____
 /// Note: This function refers to deletePartition from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L612-663
-pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(), ()> {
-    if pip_core_mpu::pip_delete_partition(child_part_desc_block_local_id) & 1 == 1 {
+pub fn delete_partition(child_part_desc_block_local_id: &BlockId) -> Result<(), ()> {
+    if pip_core_mpu::pip_delete_partition(child_part_desc_block_local_id.id() as *const u32) & 1
+        == 1
+    {
         Ok(())
     } else {
         Err(())
@@ -265,12 +268,12 @@ pub fn delete_partition(child_part_desc_block_local_id: &*const u32) -> Result<(
 /// ____
 /// Note: This function refers to collect from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L665-703
-pub fn collect(part_desc_block_id: &*const u32) -> Result<*const u32, ()> {
-    let collected_block_local_id = pip_core_mpu::pip_collect(part_desc_block_id);
+pub fn collect(part_desc_block_id: &BlockId) -> Result<BlockId, ()> {
+    let collected_block_local_id = pip_core_mpu::pip_collect(part_desc_block_id.id() as *const u32);
 
     collected_block_local_id
         .is_null()
-        .then(|| collected_block_local_id)
+        .then(|| BlockId::new(collected_block_local_id as usize))
         .ok_or(())
 }
 
@@ -300,11 +303,16 @@ pub fn collect(part_desc_block_id: &*const u32) -> Result<*const u32, ()> {
 /// Note: This function refers to mapMPU from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L706-759
 pub fn map_mpu(
-    part_desc_block_id: &*const u32,
-    block_to_map_local_id: &*const u32,
+    part_desc_block_id: &BlockId,
+    block_to_map_local_id: &BlockId,
     mpu_region_nb: i32,
 ) -> Result<(), ()> {
-    if pip_core_mpu::pip_map_mpu(part_desc_block_id, block_to_map_local_id, mpu_region_nb) & 1 == 1
+    if pip_core_mpu::pip_map_mpu(
+        part_desc_block_id.id() as *const u32,
+        block_to_map_local_id.id() as *const u32,
+        mpu_region_nb,
+    ) & 1
+        == 1
     {
         Ok(())
     } else {
@@ -331,12 +339,13 @@ pub fn map_mpu(
 /// ____
 /// Note: This function refers to readMPU from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L762-794
-pub fn read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> Result<*const u32, ()> {
-    let block_read_local_id = pip_core_mpu::pip_read_mpu(part_desc_block_id, mpu_region_nb);
+pub fn read_mpu(part_desc_block_id: &BlockId, mpu_region_nb: i32) -> Result<BlockId, ()> {
+    let block_read_local_id =
+        pip_core_mpu::pip_read_mpu(part_desc_block_id.id() as *const u32, mpu_region_nb);
 
     block_read_local_id
         .is_null()
-        .then(|| block_read_local_id)
+        .then(|| BlockId::new(block_read_local_id as usize))
         .ok_or(())
 }
 
@@ -361,13 +370,10 @@ pub fn read_mpu(part_desc_block_id: &*const u32, mpu_region_nb: i32) -> Result<*
 /// ____
 /// Note: This function refers to findBlock from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L796-840
-pub fn find_block(
-    part_desc_block_id: &*const u32,
-    addr_in_block: &*const u32,
-) -> Result<BlockAttr, ()> {
+pub fn find_block(part_desc_block_id: &BlockId, addr_in_block: *const u32) -> Result<Block, ()> {
     let target_block_addr = BlockOrError::new();
     if pip_core_mpu::pip_find_block(
-        part_desc_block_id,
+        part_desc_block_id.id() as *const u32,
         addr_in_block,
         &(&target_block_addr as *const _),
     ) & 1
@@ -377,7 +383,7 @@ pub fn find_block(
             if target_block_addr.error == 1 {
                 Err(())
             } else {
-                Ok(target_block_addr.block_attr)
+                Ok(Block::fromCore(target_block_addr.block_attr))
             }
         }
     } else {
@@ -412,11 +418,13 @@ pub fn find_block(
 /// ____
 /// Note: This function refers to setVIDT from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L842-914
-pub fn set_vidt(
-    part_desc_block_id: &*const u32,
-    vidt_block_local_id: &*const u32,
-) -> Result<(), ()> {
-    if pip_core_mpu::pip_set_vidt(part_desc_block_id, vidt_block_local_id) & 1 == 1 {
+pub fn set_vidt(part_desc_block_id: &BlockId, vidt_block_local_id: &BlockId) -> Result<(), ()> {
+    if pip_core_mpu::pip_set_vidt(
+        part_desc_block_id.id() as *const u32,
+        vidt_block_local_id.id() as *const u32,
+    ) & 1
+        == 1
+    {
         Ok(())
     } else {
         Err(())
@@ -480,14 +488,14 @@ pub fn set_vidt(
 /// Note: This function refers to yield from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/yield_c.c?ref_type=heads
 pub fn r#yield(
-    callee_part_desc_block_id: &*const u32,
+    callee_part_desc_block_id: &BlockId,
     user_target_interrupt: u32,
     user_caller_context_save_index: u32,
     enable_interrupts_on_yield: bool,
     enable_interrupts_on_wake: bool,
 ) -> YieldCode {
     YieldCode::from_u32(pip_core_mpu::pip_yield(
-        callee_part_desc_block_id,
+        callee_part_desc_block_id.id() as *const u32,
         user_target_interrupt,
         user_caller_context_save_index,
         if enable_interrupts_on_yield {
@@ -523,8 +531,8 @@ pub fn r#yield(
 /// ____
 /// Note: This function refers to getIntState from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/arch/dwm1001/boot/pip_interrupt_calls.c?ref_type=heads#L40-54
-pub fn child_has_enabled_int(child_part_desc_block_local_id: *const u32) -> bool {
-    pip_core_mpu::pip_get_int_state(child_part_desc_block_local_id) & 1 == 1
+pub fn child_has_enabled_int(child_part_desc_block_local_id: &BlockId) -> bool {
+    pip_core_mpu::pip_get_int_state(child_part_desc_block_local_id.id() as *const u32) & 1 == 1
 }
 
 /// Brief.
