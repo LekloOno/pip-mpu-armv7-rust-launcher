@@ -296,7 +296,7 @@ pub fn collect(part_desc_block_id: &BlockId) -> Result<BlockId, ()> {
 ///         - Did map the given block   : Empty Ok()
 ///         - Other cases               : Empty Err()
 ///             - No block to map specified                             - block removed from the given region nb
-///             - `block_to_map_local_id` is not accessible             - block removed from the given region nb
+///             - `block_to_map_local_id` is not accessible             - nothing
 ///             - `part_desc_block_id` not current nor child partition  - nothing
 ///             - `mpu_region_nb` is not a valid region number          - nothing
 /// ____
@@ -304,12 +304,17 @@ pub fn collect(part_desc_block_id: &BlockId) -> Result<BlockId, ()> {
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L706-759
 pub fn map_mpu(
     part_desc_block_id: &BlockId,
-    block_to_map_local_id: &BlockId,
+    block_to_map_local_id: Option<&BlockId>,
     mpu_region_nb: i32,
 ) -> Result<(), ()> {
+    let fin_block_to_map_local_id = match block_to_map_local_id {
+        Some(x) => x.id() as *const u32,
+        _ => 0 as *const u32,
+    };
+
     if pip_core_mpu::pip_map_mpu(
         part_desc_block_id.id() as *const u32,
-        block_to_map_local_id.id() as *const u32,
+        fin_block_to_map_local_id,
         mpu_region_nb,
     ) & 1
         == 1
@@ -418,8 +423,14 @@ pub fn find_block(part_desc_block_id: &BlockId, addr_in_block: *const u32) -> Re
 /// ____
 /// Note: This function refers to setVIDT from pip-core-mpu
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L842-914
-pub fn set_vidt(part_desc_block_id: &BlockId, vidt_address: *const u32) -> Result<(), ()> {
-    if pip_core_mpu::pip_set_vidt(part_desc_block_id.id() as *const u32, vidt_address) & 1 == 1 {
+pub fn set_vidt(part_desc_block_id: &BlockId, vidt_address: Option<*const u32>) -> Result<(), ()> {
+    let fin_vidt_address = match vidt_address {
+        Some(x) => x,
+        _ => 0 as *const u32,
+    };
+
+    if pip_core_mpu::pip_set_vidt(part_desc_block_id.id() as *const u32, fin_vidt_address) & 1 == 1
+    {
         Ok(())
     } else {
         Err(())
