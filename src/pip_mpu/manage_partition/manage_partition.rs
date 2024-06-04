@@ -277,5 +277,42 @@ pub fn m_create_partition(
         kern_block_id,
     );
 
+    pip_rust_mpu::set_vidt(&pd_block_id, vidt_addr as *const u32).unwrap();
+
     Ok(CreateReturn::new(partition, parent_infos))
+}
+
+pub fn m_map_partition(partition_full_infos: CreateReturn) {
+    pip_rust_mpu::map_mpu(
+        &partition_full_infos.parent_infos.pd_block_id,
+        &partition_full_infos.partition.stack_vidt_block_id,
+        0,
+    )
+    .unwrap();
+    pip_rust_mpu::map_mpu(
+        &partition_full_infos.parent_infos.pd_block_id,
+        &partition_full_infos.partition.ctx_itf_block_id,
+        1,
+    )
+    .unwrap();
+    pip_rust_mpu::map_mpu(
+        &partition_full_infos.parent_infos.pd_block_id,
+        &partition_full_infos.partition.rom_block_id,
+        2,
+    )
+    .unwrap();
+
+    match partition_full_infos.partition.unused_ram_block_id {
+        Some(x) => {
+            pip_rust_mpu::map_mpu(&partition_full_infos.parent_infos.pd_block_id, &x, 2).unwrap()
+        }
+        _ => {}
+    }
+
+    match partition_full_infos.partition.unused_rom_block_id {
+        Some(x) => {
+            pip_rust_mpu::map_mpu(&partition_full_infos.parent_infos.pd_block_id, &x, 2).unwrap()
+        }
+        _ => {}
+    }
 }
