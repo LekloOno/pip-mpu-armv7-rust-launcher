@@ -320,6 +320,20 @@ pub fn map_mpu(
     }
 }
 
+pub fn unmap_mpu(part_desc_block_id: &BlockId, mpu_region_nb: i32) -> Result<(), ()> {
+    if pip_core_mpu::pip_map_mpu(
+        part_desc_block_id.id() as *const u32,
+        0 as *const u32,
+        mpu_region_nb,
+    ) & 1
+        == 1
+    {
+        Ok(())
+    } else {
+        Err(())
+    }
+}
+
 /// Brief.
 ///     Reads the content of the given mpu region.
 ///
@@ -420,6 +434,14 @@ pub fn find_block(part_desc_block_id: &BlockId, addr_in_block: *const u32) -> Re
 /// see https://gitlab.univ-lille.fr/2xs/pip/pipcore-mpu/-/blob/master/src/core/Services.v?ref_type=heads#L842-914
 pub fn set_vidt(part_desc_block_id: &BlockId, vidt_address: *const u32) -> Result<(), ()> {
     if pip_core_mpu::pip_set_vidt(part_desc_block_id.id() as *const u32, vidt_address) & 1 == 1 {
+        Ok(())
+    } else {
+        Err(())
+    }
+}
+
+pub fn unset_vidt(part_desc_block_id: &BlockId) -> Result<(), ()> {
+    if pip_core_mpu::pip_set_vidt(part_desc_block_id.id() as *const u32, 0 as *const u32) & 1 == 1 {
         Ok(())
     } else {
         Err(())
