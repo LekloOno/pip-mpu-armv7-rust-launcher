@@ -2,16 +2,39 @@ use crate::pip_mpu::core::pip_items::Interface;
 use core::ptr;
 
 pub struct Partition {
-    pub stack_addr: *const u32,           //Address of this partition's stack
-    pub vidt_addr: *const u32,            //Address of this partition's vidt
-    pub interface_addr: *const Interface, //Address of this partition's interface
-    pub stack_vidt_block_id: *const u32,  //Local Id of the block containing the stack & vidt
-    pub ctx_itf_block_id: *const u32,     //Local Id of the block containing the interface
-    pub rom_block_id: *const u32,         //Local Id of the block containing the used ROM
+    pub stack_vidt_block_id: *const u32, //Local Id of the block containing the stack & vidt
+    pub ctx_itf_block_id: *const u32,    //Local Id of the block containing the interface
+    pub rom_block_id: *const u32,        //Local Id of the block containing the used ROM
 
     //Branch partition attributes
-    pub unused_ram_block_id: *const u32, //Local Id of the block containing the unused RAM, NULL if this partition is a leaf partition
-    pub unused_rom_block_id: *const u32, //Local Id of the block containing the unused ROM, NULL if this partition is a leaf partition
+    pub unused_ram_block_id: Option<*const u32>, //Local Id of the block containing the unused RAM, NULL if this partition is a leaf partition
+    pub unused_rom_block_id: Option<*const u32>, //Local Id of the block containing the unused ROM, NULL if this partition is a leaf partition
+}
+
+impl Partition {
+    pub fn new(
+        stack_vidt: *const u32,
+        ctx_itf: *const u32,
+        rom: *const u32,
+        unused_ram: Option<*const u32>,
+        unused_rom: Option<*const u32>,
+    ) -> Self {
+        Partition {
+            stack_vidt_block_id: stack_vidt,
+            ctx_itf_block_id: ctx_itf,
+            rom_block_id: rom,
+            unused_ram_block_id: unused_ram,
+            unused_rom_block_id: unused_rom,
+        }
+    }
+}
+
+pub struct Parent {
+    pub child_in_parent: Partition, //The local ids within the parent of the block cut for the child.
+    pub ram_head_block_id: Option<*const u32>, //The remaining part of the provided block after cutting the aligned stack/vidt. None if the provided block was already aligned.
+    pub rom_head_block_id: Option<*const u32>, //The remaining part of the rom block containing the entry point address. None if the provided entry address was the start address of its block.
+    pub rom_tail_block_id: Option<*const u32>, //The remaining part of the rom block after used and unused ram blocks have been cut.
+    pub new_kern_block_id: Option<*const u32>, //A new kernel structure, if it was required to create the requested partition (For now, a new kernel structure will always be created)
 
     //Merge data - used when deleting a partition to merge it back to its parent
     //In this partition's life time, these datas are unaccessible as they belong to pip.
@@ -19,44 +42,38 @@ pub struct Partition {
     pub kern_block_id: *const u32, //Local Id of the block containing the kernel structure
 }
 
-pub struct Parent {
-    pub child_in_parent: Partition, //The local ids within the parent of the block cut for the child.
-    pub ram_left_over_block_id: Option<*const u32>, //The remaining part of the provided block after cutting the aligned stack/vidt. None if the provided block was already aligned.
-    pub rom_left_over_block_id: Option<*const u32>, //The remaining part of the provided block after cutting the flash block. None if the provided entry address was the start address of its block.
-    pub new_kern_block_id: Option<*const u32>, //A new kernel structure, if it was required to create the requested partition (For now, a new kernel structure will always be created)
-}
-
-impl Partition {
-    pub fn new() -> Self {
-        Partition {
-            stack_addr: ptr::null(),
-            vidt_addr: ptr::null(),
-            interface_addr: ptr::null(),
-            stack_vidt_block_id: ptr::null(),
-            ctx_itf_block_id: ptr::null(),
-            rom_block_id: ptr::null(),
-            unused_ram_block_id: ptr::null(),
-            unused_rom_block_id: ptr::null(),
-            pd_block_id: ptr::null(),
-            kern_block_id: ptr::null(),
+impl Parent {
+    pub fn new(
+        child_in_parent: Partition,
+        ram_head_block_id: Option<*const u32>,
+        rom_head_block_id: Option<*const u32>,
+        rom_tail_block_id: Option<*const u32>,
+        new_kern_block_id: Option<*const u32>,
+        pd_block_id: *const u32,
+        kern_block_id: *const u32,
+    ) -> Self {
+        Parent {
+            child_in_parent,
+            ram_head_block_id,
+            rom_head_block_id,
+            rom_tail_block_id,
+            new_kern_block_id,
+            pd_block_id,
+            kern_block_id,
         }
     }
 }
 
 pub struct CreateReturn {
     pub partition: Partition, //The created partition datas.
-    pub parent_new_kern_block_id: Option<*const u32>,
-    pub ram_end_block_id: Option<*const u32>, //If there is RAM left out of the partition creation, its block local id
-    pub rom_end_block_id: Option<*const u32>, //If there is ROM left out of the partition creation, its block local id
+    pub parent_infos: Parent, //The informations of the partition creation related to the parent
 }
 
 impl CreateReturn {
-    pub fn new() -> Self {
+    pub fn new(partition: Partition, parent_infos: Parent) -> Self {
         Self {
-            partition: Partition::new(),
-            parent_new_kern_block_id: None,
-            ram_end_block_id: None,
-            rom_end_block_id: None,
+            partition,
+            parent_infos,
         }
     }
 }

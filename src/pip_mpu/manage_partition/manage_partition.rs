@@ -1,5 +1,5 @@
 use crate::pip_mpu::core::pip_items::{BasicContext, BlockOrError, Frame, Interface, VIDT};
-use crate::pip_mpu::manage_partition::partition_items::{Block, CreateReturn};
+use crate::pip_mpu::manage_partition::partition_items::{Block, CreateReturn, Parent, Partition};
 use crate::pip_mpu::rust::pip_rust_mpu;
 use crate::pip_mpu::tools;
 use core::mem;
@@ -16,11 +16,9 @@ pub fn m_create_partition(
     used_rom_size: usize,      //The size of the child's used ROM.
     unused_rom_size: usize,    //The size of the child's unused ROM.
 ) -> Result<CreateReturn, ()> {
-    let success_output = CreateReturn::new();
-
     // ________________________________
     //
-    // PREPARE AND INITIALISE ADDRESSES
+    // PREPARE AND INITIALIZE ADDRESSES
     // ________________________________
 
     // PIP
@@ -215,7 +213,9 @@ pub fn m_create_partition(
         };
 
     //The left over tail, depending on the requested amount of rom. General purpose within the child partition.
-    let unused_rom_id_option = if unused_rom_addr < parent_rom_block_attr.end_addr as *const u8 {
+    let unused_rom_block_id_option = if unused_rom_addr
+        < parent_rom_block_attr.end_addr as *const u8
+    {
         Some(
             pip_rust_mpu::cut_memory_block(&rom_block_id, &(unused_ram_addr as *const u32), None)
                 .unwrap(),
@@ -228,7 +228,7 @@ pub fn m_create_partition(
     let rom_end_block_id = if rom_end_addr < parent_rom_block_attr.end_addr as *const u8 {
         Some(
             pip_rust_mpu::cut_memory_block(
-                &(unused_rom_id_option.unwrap()),
+                &(unused_rom_block_id_option.unwrap()),
                 &(rom_end_addr as *const u32),
                 None,
             )
@@ -259,18 +259,36 @@ pub fn m_create_partition(
 
     let child_rom_block_id =
         pip_rust_mpu::add_memory_block(&pd_block_id, &rom_block_id, true, false, true).unwrap();
-    let child_unused_rom_block_id = match unused_rom_id_option {
-        Some(x) => {
-            Some(pip_rust_mpu::add_memory_block(&pd_block_id, &x, true, false, true).unwrap())
-        }
-        _ => None,
-    };
-    let child_rom_end_block_id = match rom_end_block_id {
+    let child_unused_rom_block_id_option = match unused_rom_block_id_option {
         Some(x) => {
             Some(pip_rust_mpu::add_memory_block(&pd_block_id, &x, true, false, true).unwrap())
         }
         _ => None,
     };
 
-    Err(())
+    let partition = Partition::new(
+        child_stack_vidt_block_id,
+        child_ctx_itf_block_id,
+        child_rom_block_id,
+        child_unused_ram_block_id_option,
+        child_unused_rom_block_id_option,
+    );
+    let partition_in_parent = Partition::new(
+        stack_vidt_block_id,
+        ctx_itf_block_id,
+        rom_block_id,
+        unused_ram_block_id_option,
+        unused_rom_block_id_option,
+    );
+    let parent_infos = Parent::new(
+        partition_in_parent,
+        ram_head_block_id,
+        rom_head_block_id,
+        rom_end_block_id,
+        Some(parent_kern_block_id),
+        pd_block_id,
+        kern_block_id,
+    );
+
+    Ok(CreateReturn::new(partition, parent_infos))
 }
