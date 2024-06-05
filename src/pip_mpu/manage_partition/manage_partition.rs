@@ -391,4 +391,22 @@ pub fn m_delete_partition(partition_full_infos: CreateReturn, parent: Partition)
             Ok(block) => (block, None),
             _ => (child_ram_block_id, Some(pip_ram_block_id)),
         };
+
+
+    // MERGE ROM
+
+    let rom_block_id = match partition_full_infos.parent_infos.rom_head_block_id {
+        Some(block) => pip_rust_mpu::merge_memory_blocks(&block, partition_full_infos.partition.rom, None).unwrap(),
+        _ => partition_full_infos.partition.rom,
+    };
+
+    let rom_block_id = match partition_full_infos.partition.unused_rom_block_id {
+        Some(block) => pip_rust_mpu::merge_memory_blocks(&rom_block_id, &block, None).unwrap(),
+        _ => rom_block_id,
+    };
+
+    let rom_block_id = match partition_full_infos.parent_infos.rom_tail_block_id {
+        Some(block) => pip_rust_mpu::merge_memory_blocks(&rom_block_id, &block, None).unwrap(),
+        _= => rom_block_id,
+    };
 }
