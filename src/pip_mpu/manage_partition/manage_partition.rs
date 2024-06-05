@@ -1,5 +1,7 @@
 use crate::pip_mpu::core::pip_items::{BasicContext, BlockOrError, Frame, Interface, VIDT};
-use crate::pip_mpu::manage_partition::partition_items::{CreateReturn, Parent, Partition};
+use crate::pip_mpu::manage_partition::partition_items::{
+    CreateReturn, DeleteInfos, Parent, Partition,
+};
 use crate::pip_mpu::rust::pip_rust_items::{Block, BlockId};
 use crate::pip_mpu::rust::pip_rust_mpu;
 use crate::pip_mpu::tools;
@@ -317,7 +319,7 @@ pub fn m_map_partition(partition_full_infos: CreateReturn) {
     }
 }
 
-pub fn m_delete_partition(partition_full_infos: CreateReturn, parent: Partition) {
+pub fn m_delete_partition(partition_full_infos: CreateReturn, parent: Partition) -> DeleteInfos {
     let pd_id = partition_full_infos.parent_infos.pd_block_id;
     pip_rust_mpu::unset_vidt(&pd_id);
 
@@ -352,7 +354,7 @@ pub fn m_delete_partition(partition_full_infos: CreateReturn, parent: Partition)
 
     // Base Ram
 
-    let child_ram_block_id = match partition_full_infos.parent_infos.ram_head_block_id {
+    let ram_block_id = match partition_full_infos.parent_infos.ram_head_block_id {
         Some(block) => pip_rust_mpu::merge_memory_blocks(
             &block,
             &partition_full_infos.partition.stack_vidt_block_id,
@@ -362,18 +364,16 @@ pub fn m_delete_partition(partition_full_infos: CreateReturn, parent: Partition)
         _ => partition_full_infos.partition.stack_vidt_block_id,
     };
 
-    let child_ram_block_id = pip_rust_mpu::merge_memory_blocks(
-        &child_ram_block_id,
+    let ram_block_id = pip_rust_mpu::merge_memory_blocks(
+        &ram_block_id,
         &partition_full_infos.partition.ctx_itf_block_id,
         None,
     )
     .unwrap();
 
-    let child_ram_block_id = match partition_full_infos.partition.unused_ram_block_id {
-        Some(block) => {
-            pip_rust_mpu::merge_memory_blocks(&child_ram_block_id, &block, None).unwrap()
-        }
-        _ => child_ram_block_id,
+    let ram_block_id = match partition_full_infos.partition.unused_ram_block_id {
+        Some(block) => pip_rust_mpu::merge_memory_blocks(&ram_block_id, &block, None).unwrap(),
+        _ => ram_block_id,
     };
 
     // Pip Ram
@@ -386,18 +386,22 @@ pub fn m_delete_partition(partition_full_infos: CreateReturn, parent: Partition)
     .unwrap();
 
     // Tries to merge pip & base ram. Might not work, and still be valid, as the pip block might or might not have been built within child block.
-    let (child_ram_block_id, pip_ram_block_id) =
-        match pip_rust_mpu::merge_memory_blocks(&child_ram_block_id, &pip_ram_block_id, None) {
+    let (ram_block_id, pip_ram_block_id) =
+        match pip_rust_mpu::merge_memory_blocks(&ram_block_id, &pip_ram_block_id, None) {
             Ok(block) => (block, None),
-            _ => (child_ram_block_id, Some(pip_ram_block_id)),
+            _ => (ram_block_id, Some(pip_ram_block_id)),
         };
-
 
     // MERGE ROM
 
     let rom_block_id = match partition_full_infos.parent_infos.rom_head_block_id {
-        Some(block) => pip_rust_mpu::merge_memory_blocks(&block, partition_full_infos.partition.rom, None).unwrap(),
-        _ => partition_full_infos.partition.rom,
+        Some(block) => pip_rust_mpu::merge_memory_blocks(
+            &block,
+            &partition_full_infos.partition.rom_block_id,
+            None,
+        )
+        .unwrap(),
+        _ => partition_full_infos.partition.rom_block_id,
     };
 
     let rom_block_id = match partition_full_infos.partition.unused_rom_block_id {
@@ -407,6 +411,8 @@ pub fn m_delete_partition(partition_full_infos: CreateReturn, parent: Partition)
 
     let rom_block_id = match partition_full_infos.parent_infos.rom_tail_block_id {
         Some(block) => pip_rust_mpu::merge_memory_blocks(&rom_block_id, &block, None).unwrap(),
-        _= => rom_block_id,
+        _ => rom_block_id,
     };
+
+    DeleteInfos::new(rom_block_id, ram_block_id, pip_ram_block_id)
 }

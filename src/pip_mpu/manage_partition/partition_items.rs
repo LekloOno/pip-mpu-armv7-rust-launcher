@@ -78,3 +78,23 @@ impl CreateReturn {
         }
     }
 }
+
+pub struct DeleteInfos {
+    pub rom_block_id: BlockId,
+    pub ram_block_id: BlockId,
+    pub pip_block_id: Option<BlockId>,
+}
+
+impl DeleteInfos {
+    pub fn new(
+        rom_block_id: BlockId,
+        ram_block_id: BlockId,
+        pip_block_id: Option<BlockId>,
+    ) -> Self {
+        Self {
+            rom_block_id,
+            ram_block_id,
+            pip_block_id,
+        }
+    }
+}
