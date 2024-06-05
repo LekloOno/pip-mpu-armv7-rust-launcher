@@ -304,15 +304,91 @@ pub fn m_map_partition(partition_full_infos: CreateReturn) {
 
     match partition_full_infos.partition.unused_ram_block_id {
         Some(x) => {
-            pip_rust_mpu::map_mpu(&partition_full_infos.parent_infos.pd_block_id, &x, 2).unwrap()
+            pip_rust_mpu::map_mpu(&partition_full_infos.parent_infos.pd_block_id, &x, 3).unwrap()
         }
         _ => {}
     }
 
     match partition_full_infos.partition.unused_rom_block_id {
         Some(x) => {
-            pip_rust_mpu::map_mpu(&partition_full_infos.parent_infos.pd_block_id, &x, 2).unwrap()
+            pip_rust_mpu::map_mpu(&partition_full_infos.parent_infos.pd_block_id, &x, 4).unwrap()
         }
         _ => {}
     }
+}
+
+pub fn m_delete_partition(partition_full_infos: CreateReturn, parent: Partition) {
+    let pd_id = partition_full_infos.parent_infos.pd_block_id;
+    pip_rust_mpu::unset_vidt(&pd_id);
+
+    match partition_full_infos.partition.unused_rom_block_id {
+        Some(block) => {
+            pip_rust_mpu::unmap_mpu(&pd_id, 4).unwrap();
+            pip_rust_mpu::remove_memory_block(&block);
+        }
+        _ => {}
+    }
+
+    match partition_full_infos.partition.unused_ram_block_id {
+        Some(block) => {
+            pip_rust_mpu::unmap_mpu(&pd_id, 3).unwrap();
+            pip_rust_mpu::remove_memory_block(&block);
+        }
+        _ => {}
+    }
+
+    pip_rust_mpu::unmap_mpu(&pd_id, 2).unwrap();
+    pip_rust_mpu::unmap_mpu(&pd_id, 1).unwrap();
+    pip_rust_mpu::unmap_mpu(&pd_id, 0).unwrap();
+
+    pip_rust_mpu::remove_memory_block(&partition_full_infos.partition.stack_vidt_block_id).unwrap();
+    pip_rust_mpu::remove_memory_block(&partition_full_infos.partition.ctx_itf_block_id).unwrap();
+    pip_rust_mpu::remove_memory_block(&partition_full_infos.partition.rom_block_id).unwrap();
+
+    pip_rust_mpu::collect(&pd_id).unwrap();
+    pip_rust_mpu::delete_partition(&pd_id).unwrap();
+
+    // MERGE RAM
+
+    // Base Ram
+
+    let child_ram_block_id = match partition_full_infos.parent_infos.ram_head_block_id {
+        Some(block) => pip_rust_mpu::merge_memory_blocks(
+            &block,
+            &partition_full_infos.partition.stack_vidt_block_id,
+            None,
+        )
+        .unwrap(),
+        _ => partition_full_infos.partition.stack_vidt_block_id,
+    };
+
+    let child_ram_block_id = pip_rust_mpu::merge_memory_blocks(
+        &child_ram_block_id,
+        &partition_full_infos.partition.ctx_itf_block_id,
+        None,
+    )
+    .unwrap();
+
+    let child_ram_block_id = match partition_full_infos.partition.unused_ram_block_id {
+        Some(block) => {
+            pip_rust_mpu::merge_memory_blocks(&child_ram_block_id, &block, None).unwrap()
+        }
+        _ => child_ram_block_id,
+    };
+
+    // Pip Ram
+
+    let pip_ram_block_id = pip_rust_mpu::merge_memory_blocks(
+        &partition_full_infos.parent_infos.kern_block_id,
+        &partition_full_infos.parent_infos.pd_block_id,
+        None,
+    )
+    .unwrap();
+
+    // Tries to merge pip & base ram. Might not work, and still be valid, as the pip block might or might not have been built within child block.
+    let (child_ram_block_id, pip_ram_block_id) =
+        match pip_rust_mpu::merge_memory_blocks(&child_ram_block_id, &pip_ram_block_id, None) {
+            Ok(block) => (block, None),
+            _ => (child_ram_block_id, Some(pip_ram_block_id)),
+        };
 }
