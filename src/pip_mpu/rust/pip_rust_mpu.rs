@@ -89,16 +89,21 @@ pub fn cut_memory_block(
 pub fn merge_memory_blocks(
     block_to_merge_1_local_id: &BlockId,
     block_to_merge_2_local_id: &BlockId,
-    mpu_region_nb: i32,
-) -> Option<BlockId> {
+    mpu_region_nb: Option<i32>,
+) -> Result<BlockId, ()> {
+    let fin_mpu_region_nb = match mpu_region_nb {
+        Some(region) => region,
+        _ => -1,
+    };
     let merged_block_local_id = pip_core_mpu::pip_merge_memory_blocks(
         block_to_merge_1_local_id.id() as *const u32,
         block_to_merge_2_local_id.id() as *const u32,
-        mpu_region_nb,
+        fin_mpu_region_nb,
     );
     merged_block_local_id
         .is_null()
         .then(|| BlockId::new(merged_block_local_id as usize))
+        .ok_or(())
 }
 
 /// Brief.
