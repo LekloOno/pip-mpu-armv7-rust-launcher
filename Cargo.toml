@@ -11,7 +11,7 @@ enum_from_derive = {git = "https://github.com/LekloOno/ProcMacro_PrimitiveToEnum
 
 [profile.dev]
 panic = "abort"
-debug = false
+debug = true
 
 [profile.release]
 panic = "abort"

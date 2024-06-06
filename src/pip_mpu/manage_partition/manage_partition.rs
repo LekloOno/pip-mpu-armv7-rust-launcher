@@ -8,6 +8,79 @@ use crate::pip_mpu::tools;
 use core::mem;
 use ptr_bits_ops::{MutPtrBitsOps, PtrBitsOps};
 
+/*
++-----+                         +-----+                         +-----+
+|/////| pip reserved block      |\ \ \| parent reserved block   |     | child block
++-----+                         +-----+                         +-----+
+
+RAM
+
+Parent ram
+/!\ This is an arbitrary representation /!\
+#parent ram might be separated in multiple and non contiguous blocks
+#the optional pip block could be before child_ram_block or in a completely different block
++-----------------------------+
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |                 child_ram_block
++-----------------------------+_ _ _            +---------------------------------+
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|                 | \ \<optional> ram_head_block \ \| -> |Resultant of stack vidt alignment
+|                             |     |           +---------------------------------+
+|                             |                 |        stack_vidt_block         |
+|                             |     |           +---------------------------------+
+|                             |             |   |         ctx_itf_block           |
+|       child_ram_block       |     |--->   |   +---------------------------------+
+|                             |             |   |                                 |
+|                             |     |           |   <optional> unused_ram_block   | -> |Could be no unused_ram_block if the if the given
+|                             |                 |                                 |    |child_ram_block just fits the stack_vidt & ctx_itf
+|                             |     |           +---------------------------------+
+|                             |_ _ _            |//////<optional> pip_block///////| -> |If no pip block is given to create the partition
++-----------------------------+                 +---------------------------------+
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|                 pip_block
++-----------------------------+_ _ _            +---------------------------------+
+|/////////////////////////////|             |   |///////////pd_block_id///////////|
+|////<optional> pip_block/////|     |--->   |   +---------------------------------+ -> |pd and kernel structure of the child partition
+|/////////////////////////////|_ _ _        |   |//////////kern_block_id//////////|
++-----------------------------+                 +---------------------------------+
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |
++-----------------------------+
+|//<optional> new_kern_block//| -> |If creating a new kernel structure is required to prepare the new partition's blocks
++-----------------------------+
+
+___________________________________________________________________________________
+ROM
+
+Parent rom
+(arbitrary representation, parent rom might be separated in multiple and non contiguous blocks)
++-----------------------------+                     +-----------------------------+
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|                     |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
+| \ \ \ \ rom block X \ \ \ \ |                     | \ \ \ \ \ \ \ \ \ \ \ \ \ \ |
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|                     |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
++-----------------------------+                     +-----------------------------+
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|                     |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |                     | \<optional> rom_head_block\ |
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|                     |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ | <-- entry_point --> +-----------------------------+
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|         |           |                             |
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |    used_rom_size    |          rom_block          |
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|         |           |                             |
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |       --+--         +-----------------------------+
+|\ \ \ \ \rom block Y\ \ \ \ \|         |           |                             |
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |   unused_rom_size   | <optional> unused_rom_block |
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|         |           |                             |
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |       --+--         +-----------------------------+
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|                     |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |                     | \<optional> rom_tail_block\ |
+|\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|                     |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
++-----------------------------+                     +-----------------------------+
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |                     | \ \ \ \ \ \ \ \ \ \ \ \ \ \ |
+|\ \ \ \ \rom block Z\ \ \ \ \|                     |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \|
+| \ \ \ \ \ \ \ \ \ \ \ \ \ \ |                     | \ \ \ \ \ \ \ \ \ \ \ \ \ \ |
++-----------------------------+                     +-----------------------------+
+*/
+
 pub fn m_create_partition(
     parent_itf: &Interface, //Structure describing the initial parent memory layout.
     parent_ctx: *const BasicContext, //The address of the space where the parent's context lies
@@ -284,7 +357,7 @@ pub fn m_create_partition(
     Ok(CreateReturn::new(partition, parent_infos))
 }
 
-pub fn m_map_partition(partition_full_infos: CreateReturn) {
+pub fn m_map_partition(partition_full_infos: &CreateReturn) {
     pip_rust_mpu::map_mpu(
         &partition_full_infos.parent_infos.pd_block_id,
         &partition_full_infos.partition.stack_vidt_block_id,
@@ -319,7 +392,7 @@ pub fn m_map_partition(partition_full_infos: CreateReturn) {
     }
 }
 
-pub fn m_delete_partition(partition_full_infos: CreateReturn, parent: Partition) -> DeleteInfos {
+pub fn m_delete_partition(partition_full_infos: &CreateReturn) -> DeleteInfos {
     let pd_id = partition_full_infos.parent_infos.pd_block_id;
     pip_rust_mpu::unset_vidt(&pd_id);
 

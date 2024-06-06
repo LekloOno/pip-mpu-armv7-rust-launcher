@@ -13,7 +13,9 @@ use mini_format::*;
 use io::{putc, putcs, puts};
 
 use crate::pip_mpu::core::pip_items::{BasicContext, Interface};
-use crate::pip_mpu::manage_partition::manage_partition::m_create_partition;
+use crate::pip_mpu::manage_partition::manage_partition::{
+    m_create_partition, m_delete_partition, m_map_partition,
+};
 use crate::pip_mpu::rust::pip_rust_items::{Block, BlockId};
 use crate::pip_mpu::rust::pip_rust_mpu::find_block;
 use core::fmt::Write;
@@ -40,7 +42,11 @@ extern "C" fn start(interface: &Interface) -> ! {
         512,
         512,
         0,
-    );
+    )
+    .unwrap();
+
+    m_map_partition(&partition_result);
+    let delete_result = m_delete_partition(&partition_result);
 
     loop {}
 }
